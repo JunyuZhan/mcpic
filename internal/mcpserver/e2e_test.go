@@ -20,6 +20,7 @@ import (
 
 	"github.com/mcpic/mcpic/internal/config"
 	"github.com/mcpic/mcpic/internal/httpapi"
+	"github.com/mcpic/mcpic/internal/imgproc"
 	"github.com/mcpic/mcpic/internal/meta"
 	"github.com/mcpic/mcpic/internal/service"
 	"github.com/mcpic/mcpic/internal/storage"
@@ -293,4 +294,99 @@ func TestE2E_MCPUploadLoop(t *testing.T) {
 			t.Fatalf("format=original 应保持 png, got %s", ct)
 		}
 	})
+}
+
+// probeURL 下载图片字节并读取真实格式与尺寸。
+func (e *e2eEnv) probeURL(rawURL string) imgproc.Info {
+	e.t.Helper()
+	resp, err := http.Get(rawURL)
+	if err != nil {
+		e.t.Fatalf("GET %s: %v", rawURL, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		e.t.Fatalf("HTTP %d for %s", resp.StatusCode, rawURL)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	info, err := imgproc.Probe(body)
+	if err != nil {
+		e.t.Fatalf("Probe: %v", err)
+	}
+	return info
+}
+
+func urlOf(text string) string {
+	return strings.TrimPrefix(strings.Split(text, "\n")[1], "URL: ")
+}
+
+// TestE2E_BUG2_PathOptionsHonored 回归 BUG-2：path 来源下 format / max_width
+// 曾被静默忽略（server 丢弃 opts + service 硬编码空 Options）。
+func TestE2E_BUG2_PathOptionsHonored(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e 需要构建二进制")
+	}
+	env := newE2EEnv(t)
+	wide := env.writePNG("wide.png", 2400, 1600)
+	_ = wide
+
+	t.Run("path + max_width", func(t *testing.T) {
+		text, isErr := env.call(uploadArgs{
+			Path:     filepath.Join(env.imgDir, "wide.png"),
+			MaxWidth: 400,
+		})
+		if isErr {
+			t.Fatalf("不应失败: %s", text)
+		}
+		info := env.probeURL(urlOf(text) + "?raw=1")
+		if info.Width != 400 || info.Height != 266 {
+			t.Fatalf("path+max_width=400 应得 400x266, got %dx%d (%s)",
+				info.Width, info.Height, info.Format)
+		}
+		if info.Format != "webp" {
+			t.Fatalf("format = %s", info.Format)
+		}
+	})
+
+	t.Run("path + format=original", func(t *testing.T) {
+		text, isErr := env.call(uploadArgs{
+			Path:   filepath.Join(env.imgDir, "wide.png"),
+			Format: "original",
+		})
+		if isErr {
+			t.Fatalf("不应失败: %s", text)
+		}
+		info := env.probeURL(urlOf(text) + "?raw=1")
+		if info.Format != "png" {
+			t.Fatalf("path+format=original 应保留 png, got %s", info.Format)
+		}
+		// format 只决定输出容器；缩放仍由 max_width 默认值 1920 控制（PRD 第 5 节）。
+		if info.Width != 1920 || info.Height != 1280 {
+			t.Fatalf("original 下默认缩放应得 1920x1280, got %dx%d", info.Width, info.Height)
+		}
+	})
+}
+
+// TestE2E_BUG1_InvalidBase64Classification 回归 BUG-1：非法 base64 必须归类
+// BAD_REQUEST（参数错误），而不是落到“未预期的错误 + 反馈给维护者”。
+func TestE2E_BUG1_InvalidBase64Classification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e 需要构建二进制")
+	}
+	env := newE2EEnv(t)
+	text, isErr := env.call(uploadArgs{Data: "!!!not-base64!!!"})
+	if !isErr {
+		t.Fatalf("应返回工具错误: %s", text)
+	}
+	if strings.Contains(text, "未预期的错误") {
+		t.Fatalf("BUG-1 未修复：非法 base64 落到未归类分支:\n%s", text)
+	}
+	for _, want := range []string{
+		"上传失败：参数错误：data 不是合法的 base64",
+		"数据: base64，",
+		"请检查参数格式后重试。",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("缺少 %q：\n%s", want, text)
+		}
+	}
 }

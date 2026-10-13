@@ -98,7 +98,7 @@ func TestUploadFileTooLarge(t *testing.T) {
 
 func TestUploadPathNotAllowed(t *testing.T) {
 	svc, _ := newTestService(t)
-	_, err := svc.UploadPath(context.Background(), "/etc/passwd")
+	_, err := svc.UploadPath(context.Background(), "/etc/passwd", Options{})
 	var ae *apperr.Error
 	if !errors.As(err, &ae) || ae.Code != apperr.CodePathNotAllowed {
 		t.Fatalf("期望 PATH_NOT_ALLOWED, got %v", err)
@@ -114,7 +114,7 @@ func TestUploadPathPrefixBoundary(t *testing.T) {
 	cfg.AllowedPaths = []string{"/tmp"}
 	svc.cfg = cfg
 
-	_, err := svc.UploadPath(context.Background(), "/tmp_evil/x.png")
+	_, err := svc.UploadPath(context.Background(), "/tmp_evil/x.png", Options{})
 	var ae *apperr.Error
 	if !errors.As(err, &ae) {
 		// 若文件不存在且路径判定为允许，会走到 FILE_NOT_FOUND —— 那说明边界匹配失败。
@@ -131,7 +131,7 @@ func TestUploadPathNotFound(t *testing.T) {
 	cfg.AllowedPaths = []string{tmp}
 	svc.cfg = cfg
 
-	_, err := svc.UploadPath(context.Background(), filepath.Join(tmp, "nope.png"))
+	_, err := svc.UploadPath(context.Background(), filepath.Join(tmp, "nope.png"), Options{})
 	var ae *apperr.Error
 	if !errors.As(err, &ae) || ae.Code != apperr.CodeFileNotFound {
 		t.Fatalf("期望 FILE_NOT_FOUND, got %v", err)
@@ -151,13 +151,49 @@ func TestUploadPathSucceeds(t *testing.T) {
 	if err := os.WriteFile(p, pngBytes(t, 50, 50), 0o600); err != nil {
 		t.Fatalf("写测试文件: %v", err)
 	}
-	res, err := svc.UploadPath(context.Background(), p)
+	res, err := svc.UploadPath(context.Background(), p, Options{})
 	if err != nil {
 		t.Fatalf("UploadPath: %v", err)
 	}
 	if res.Format != "webp" {
 		t.Fatalf("format = %s", res.Format)
 	}
+}
+
+// TestUploadPathRespectsOptions 守护 BUG-2：path 来源必须应用 format / max_width。
+func TestUploadPathRespectsOptions(t *testing.T) {
+	svc, cfg := newTestService(t)
+	tmp := t.TempDir()
+	cfg.AllowedPaths = []string{tmp}
+	svc.cfg = cfg
+
+	p := filepath.Join(tmp, "wide.png")
+	if err := os.WriteFile(p, pngBytes(t, 2400, 1600), 0o600); err != nil {
+		t.Fatalf("写测试文件: %v", err)
+	}
+
+	t.Run("max_width 生效", func(t *testing.T) {
+		res, err := svc.UploadPath(context.Background(), p, Options{MaxWidth: 400})
+		if err != nil {
+			t.Fatalf("UploadPath: %v", err)
+		}
+		if res.Width != 400 || res.Height != 266 {
+			t.Fatalf("期望缩放到 400x266, got %dx%d", res.Width, res.Height)
+		}
+		if res.Format != "webp" {
+			t.Fatalf("format = %s", res.Format)
+		}
+	})
+
+	t.Run("format=original 生效", func(t *testing.T) {
+		res, err := svc.UploadPath(context.Background(), p, Options{Format: "original"})
+		if err != nil {
+			t.Fatalf("UploadPath: %v", err)
+		}
+		if res.Format != "png" {
+			t.Fatalf("original 应保留 png, got %s", res.Format)
+		}
+	})
 }
 
 func TestGetMissingKey(t *testing.T) {
@@ -172,7 +208,7 @@ func TestAllowAllPaths(t *testing.T) {
 	cfg.AllowAll = true
 	svc.cfg = cfg
 	// /etc/passwd 路径允许但会因格式失败 —— 只验证白名单放行。
-	_, err := svc.UploadPath(context.Background(), "/etc/hostname")
+	_, err := svc.UploadPath(context.Background(), "/etc/hostname", Options{})
 	var ae *apperr.Error
 	if errors.As(err, &ae) && ae.Code == apperr.CodePathNotAllowed {
 		t.Fatalf("AllowAll 应放行路径: %v", err)

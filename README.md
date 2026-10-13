@@ -93,6 +93,18 @@ curl http://localhost:8080/healthz
 
 限制：单文件 ≤ 10MB；仅 PNG / JPEG（GIF 与动画 WebP 原样存储，不缩放不转格式）。
 
+## 故障排查
+
+> ### ⚠️ MCP 与 HTTP 必须共用同一个 `MCPIC_STORAGE_PATH`，否则链接 404
+>
+> MCP 进程（`mcpic mcp`）与 HTTP 服务是两个独立进程，靠**同一个存储目录**（含其中的
+> `mcpic.db`）协作：MCP 写入图片与元数据，HTTP 按 key 读取。
+> 两边 `MCPIC_STORAGE_PATH` 不一致时，**MCP 上传会正常返回 URL，但 HTTP 查不到该 key，
+> 打开链接就是 404。**
+>
+> 排查：对比 MCP 配置与 HTTP 服务启动时的 `MCPIC_STORAGE_PATH` 是否指向同一绝对路径
+> （Docker 部署时即同一个 volume，如 `-v mcpic-data:/data` 配 `-e MCPIC_STORAGE_PATH=/data`）。
+
 ## 开发
 
 ```bash

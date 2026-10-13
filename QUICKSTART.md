@@ -54,3 +54,15 @@ curl -X POST http://localhost:8080/api/upload -H "X-API-Key: your-secret-key" -F
 ```
 
 返回 JSON 中的 `markdown` 字段即为可直接粘贴的图片链接（如 `![image](http://localhost:8080/i/xxxxxxx)`）。
+
+## 4. 故障排查
+
+> ### ⚠️ MCP 与 HTTP 必须共用同一个 `MCPIC_STORAGE_PATH`，否则链接 404
+>
+> MCP 进程（`mcpic mcp`）和 HTTP 服务是**两个独立进程**，它们靠**同一个存储目录**
+> （`MCPIC_STORAGE_PATH`，含其中的 `mcpic.db`）协作：MCP 写入图片与元数据，HTTP 按 key 读取。
+> 两边目录不一致时，**MCP 上传会正常返回 URL，但 HTTP 在数据库里查不到该 key，打开链接就是 404。**
+>
+> 排查方法：对比 MCP 配置里 `MCPIC_STORAGE_PATH` 与 HTTP 服务启动时的 `MCPIC_STORAGE_PATH`
+> （Docker 部署时即挂载的同一个 volume，例如 `-v mcpic-data:/data` 对应 `-e MCPIC_STORAGE_PATH=/data`）。
+> 不确定时，让两边都指向同一绝对路径即可。

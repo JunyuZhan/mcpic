@@ -10,6 +10,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/mcpic/mcpic/internal/apperr"
 	"github.com/mcpic/mcpic/internal/config"
 	"github.com/mcpic/mcpic/internal/service"
 )
@@ -79,11 +80,13 @@ func (s *Server) upload(ctx context.Context, args uploadArgs) string {
 	)
 	switch source {
 	case sourcePath:
-		res, e = s.svc.UploadPath(ctx, args.Path)
+		res, e = s.svc.UploadPath(ctx, args.Path, opts)
 	case sourceData:
 		raw, derr := base64.StdEncoding.DecodeString(args.Data)
 		if derr != nil {
-			return renderFailure(fmt.Errorf("BAD_REQUEST: data 不是合法的 base64：%v", derr), describeSource(args))
+			return renderFailure(
+				apperr.BadRequest(fmt.Sprintf("data 不是合法的 base64：%v", derr)),
+				describeSource(args))
 		}
 		res, e = s.svc.Upload(ctx, strings.NewReader(string(raw)), "", opts)
 	case sourceURL:

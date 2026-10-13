@@ -110,7 +110,7 @@ func (s *Service) Upload(ctx context.Context, r io.Reader, filename string, opts
 }
 
 // UploadPath 读取本地路径并上传（MCP 直传，PRD 3.1 / 3.5）。
-func (s *Service) UploadPath(ctx context.Context, path string) (Result, error) {
+func (s *Service) UploadPath(ctx context.Context, path string, opts Options) (Result, error) {
 	if err := s.checkPath(path); err != nil {
 		return Result{}, err
 	}
@@ -122,7 +122,7 @@ func (s *Service) UploadPath(ctx context.Context, path string) (Result, error) {
 		return Result{}, apperr.StorageError(err)
 	}
 	defer func() { _ = f.Close() }()
-	return s.Upload(ctx, f, filepath.Base(path), Options{})
+	return s.Upload(ctx, f, filepath.Base(path), opts)
 }
 
 // UploadURL 下载远程图片并上传（MCP 的 url 来源，PRD 3.1）。
