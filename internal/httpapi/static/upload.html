@@ -85,7 +85,7 @@ footer{margin-top:64px;padding:24px 0 48px;border-top:1px solid var(--graphite);
 
 <div class="drop" id="drop">
   <div class="big">拖拽图片到此处</div>
-  <div class="small">或点击选择文件（可多选）· 支持 PNG / JPEG / GIF / WebP · 单张最大 10MB</div>
+  <div class="small">或点击选择文件（可多选）· 支持 PNG / JPEG / GIF / WebP · 单张最大 10MB · 超过 3MB 自动预压缩（长边 1920 · WebP 85）</div>
   <input type="file" id="file" accept="image/*" multiple hidden>
 </div>
 <div class="status" id="status"></div>
@@ -129,6 +129,35 @@ var active = false;
 
 function isImage(f){ return f && f.type && f.type.indexOf('image/') === 0 }
 
+/* D4.7：超过 3MB 的常见大图在前端预压缩（长边 1920、WebP 85），绕开隧道带宽墙。
+   GIF（动图）与解码失败一律原样上传，服务端行为不变。 */
+var SOFT_LIMIT = 3 * 1024 * 1024;
+function compressIfLarge(file){
+  return new Promise(function(resolve){
+    if(file.size <= SOFT_LIMIT || file.type === 'image/gif'){ resolve(file); return }
+    var img = new Image();
+    img.onload = function(){
+      try{
+        var max = 1920;
+        var scale = Math.min(1, max / Math.max(img.width, img.height));
+        var cw = Math.max(1, Math.round(img.width * scale));
+        var ch = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas');
+        c.width = cw; c.height = ch;
+        c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        c.toBlob(function(b){
+          URL.revokeObjectURL(img.src);
+          if(!b){ resolve(file); return }
+          var name = file.name.replace(/\.[^.]+$/, '') + (b.type === 'image/webp' ? '.webp' : '.jpg');
+          resolve(new File([b], name, { type: b.type || 'image/jpeg' }));
+        }, 'image/webp', 0.85);
+      }catch(e){ URL.revokeObjectURL(img.src); resolve(file) }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(img.src); resolve(file) };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function addFiles(fl){
   if(!fl || !fl.length) return;
   var added = 0, skipped = [];
@@ -151,16 +180,21 @@ function pump(){
   next.state = 'uploading';
   active = true;
   render();
-  var fd = new FormData();
-  fd.append('file', next.file);
-  fetch('/api/upload', { method: 'POST', headers: { 'X-API-Key': k }, body: fd })
-    .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j } }) })
-    .then(function(res){
-      if(res.ok){ next.state = 'done'; next.data = res.j; next.thumbURL = URL.createObjectURL(next.file); }
-      else { next.state = 'fail'; next.error = (res.j.message || res.j.error || '未知错误'); }
-    })
-    .catch(function(){ next.state = 'fail'; next.error = '网络错误，请重试'; })
-    .then(function(){ active = false; render(); pump(); });
+  compressIfLarge(next.file).then(function(f){
+    var fd = new FormData();
+    fd.append('file', f);
+    return fetch('/api/upload', { method: 'POST', headers: { 'X-API-Key': k }, body: fd })
+      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j } }) })
+      .then(function(res){
+        if(res.ok){ next.state = 'done'; next.data = res.j; next.thumbURL = URL.createObjectURL(next.file); }
+        else { next.state = 'fail'; next.error = (res.j.message || res.j.error || '未知错误'); }
+      })
+      .catch(function(){ next.state = 'fail'; next.error = '网络错误，请重试'; });
+  }).then(function(){
+    active = false;
+    render();
+    pump();
+  });
 }
 
 function esc(s){

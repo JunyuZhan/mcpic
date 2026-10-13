@@ -62,43 +62,19 @@ footer{margin-top:48px;padding:24px 0 48px;border-top:1px solid var(--graphite);
 
 <div class="head">
   <h1>画廊</h1>
-  <span class="count" id="count">{{.Count}} 张图片</span>
+  <span class="count" id="count"></span>
 </div>
 
-{{if .Items}}
-<div class="grid" id="grid">
-  {{range .Items}}
-  <div class="item" data-key="{{.Key}}">
-    <a class="pic" href="/i/{{.Key}}"><img src="{{.RawURL}}" alt="{{.Key}}" loading="lazy"></a>
-    <div class="body">
-      <div class="metaline">
-        <span class="badge">{{.Format}}</span>
-        <span class="badge"><b>{{.Width}}×{{.Height}}</b></span>
-        <span class="badge"><b>{{.Size}}</b></span>
-        <span class="badge">{{.Created}}</span>
-      </div>
-      <div class="keyline">/i/{{.Key}}</div>
-      <div class="actions">
-        <button data-copy="{{.JSURL}}">URL</button>
-        <button data-copy="{{.JSMarkdown}}">Markdown</button>
-        <button data-copy="{{.JSHTML}}">HTML</button>
-        <button data-copy="{{.JSBBCode}}">BBCode</button>
-        <button class="del" data-del>删除</button>
-      </div>
-    </div>
-  </div>
-  {{end}}
-</div>
-{{else}}
-<div class="empty">
-  <div class="big">还没有图片</div>
-  <div class="small">上传第一张图，或让 AI Agent 通过 MCP 直传</div>
-  <a href="/upload">去上传</a>
-</div>
-{{end}}
+<div id="main"></div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
+function apiKey(){ return localStorage.getItem('mcpic_api_key') || '' }
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
 var toastTimer;
 function toast(msg){
   var t = document.getElementById('toast');
@@ -116,30 +92,87 @@ function copyText(t){
   });
   toast('已复制到剪贴板');
 }
-document.querySelectorAll('[data-copy]').forEach(function(b){
-  b.addEventListener('click', function(){ copyText(b.getAttribute('data-copy')) });
-});
-document.querySelectorAll('[data-del]').forEach(function(b){
-  b.addEventListener('click', function(){
-    var card = b.closest('.item');
+
+function fmtSize(n){
+  if(n >= 1048576) return (n/1048576).toFixed(1) + ' MB';
+  if(n >= 1024) return (n/102.4).toFixed(1) + ' KB';
+  return n + ' B';
+}
+
+function itemHTML(d){
+  return '<div class="item" data-key="' + esc(d.key) + '">'
+    + '<a class="pic" href="/i/' + esc(d.key) + '"><img src="/i/' + esc(d.key) + '?raw=1" alt="' + esc(d.key) + '" loading="lazy"></a>'
+    + '<div class="body">'
+    + '<div class="metaline">'
+    + '<span class="badge">' + esc(d.format) + '</span>'
+    + '<span class="badge"><b>' + d.width + '×' + d.height + '</b></span>'
+    + '<span class="badge"><b>' + fmtSize(d.size) + '</b></span>'
+    + '<span class="badge">' + esc(d.created) + '</span>'
+    + '</div>'
+    + '<div class="keyline">/i/' + esc(d.key) + '</div>'
+    + '<div class="actions">'
+    + '<button data-copy="' + esc(d.url) + '">URL</button>'
+    + '<button data-copy="' + esc(d.markdown) + '">Markdown</button>'
+    + '<button data-copy="' + esc(d.html) + '">HTML</button>'
+    + '<button data-copy="' + esc(d.bbcode) + '">BBCode</button>'
+    + '<button class="del" data-del>删除</button>'
+    + '</div></div></div>';
+}
+
+function emptyHTML(){
+  return '<div class="empty">'
+    + '<div class="big">还没有图片</div>'
+    + '<div class="small">上传第一张图，或让 AI Agent 通过 MCP 直传</div>'
+    + '<a href="/upload">去上传</a></div>';
+}
+
+function renderList(items){
+  document.getElementById('count').textContent = items.length + ' 张图片';
+  document.getElementById('main').innerHTML = items.length
+    ? '<div class="grid" id="grid">' + items.map(itemHTML).join('') + '</div>'
+    : emptyHTML();
+}
+
+function load(){
+  var k = apiKey();
+  if(!k){ location.href = '/upload'; return }
+  fetch('/api/gallery', { headers: { 'X-API-Key': k } })
+    .then(function(r){
+      if(r.status === 401){ localStorage.removeItem('mcpic_api_key'); location.href = '/upload'; return null }
+      if(!r.ok){ return r.json().then(function(j){ return Promise.reject(new Error(j.message || '加载失败')) }) }
+      return r.json();
+    })
+    .then(function(j){ if(j) renderList(j.items || []) })
+    .catch(function(e){
+      document.getElementById('main').innerHTML = '<div class="empty"><div class="big">加载失败：' + esc(e && e.message ? e.message : '未知错误') + '</div><div class="small">请确认 API Key 正确后刷新</div><a href="/upload">去上传页</a></div>';
+    });
+}
+
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(!t || !t.getAttribute) return;
+  if(t.hasAttribute('data-copy')){ copyText(t.getAttribute('data-copy')); return }
+  if(t.hasAttribute('data-del')){
+    var card = t.closest('.item');
     var key = card.getAttribute('data-key');
-    var k = localStorage.getItem('mcpic_api_key') || '';
-    if(!k){ toast('请先在上传页填写 API Key'); return }
-    if(!confirm('删除图片 ' + key + '？此操作不可恢复。')){ return }
+    var k = apiKey();
+    if(!k){ location.href = '/upload'; return }
+    if(!confirm('删除图片 ' + key + '？此操作不可恢复。')) return;
     fetch('/api/images/' + encodeURIComponent(key), { method: 'DELETE', headers: { 'X-API-Key': k } })
       .then(function(r){
         if(r.status === 401){ toast('API Key 无效或缺失'); return Promise.reject() }
         if(!r.ok){ return r.json().then(function(j){ return Promise.reject(new Error(j.message || '删除失败')) }) }
         card.remove();
-        var grid = document.getElementById('grid');
-        var n = grid ? grid.querySelectorAll('.item').length : 0;
+        var n = document.querySelectorAll('.item').length;
         document.getElementById('count').textContent = n + ' 张图片';
-        if(n === 0){ location.reload() }
+        if(n === 0) location.reload();
         toast('已删除');
       })
       .catch(function(e){ toast(e && e.message ? e.message : '删除失败') });
-  });
+  }
 });
+
+load();
 </script>
 </body>
 </html>

@@ -104,11 +104,12 @@
 
 ### 画廊页（`GET /gallery`）
 1. 顶栏同首页，「画廊」为激活态
-2. 头部行：标题「画廊」+ 右侧等宽计数 `N 张图片`
-3. **网格**：`repeat(auto-fill, minmax(240px, 1fr))`，卡片 `--carbon` 底 12px 圆角发丝边框，hover 边框提亮 `--smoke`
-4. 卡片：4:3 图片区（`?raw=1`，cover，lazy 加载）→ 徽标行（格式 / 尺寸 / 大小 / 时间，pill 等宽）→ key 路径行（等宽、省略号）→ 操作组：URL / Markdown / HTML / BBCode 四个幽灵按钮 + 右侧 `--coral-red`「删除」（间距隔开）
-5. 删除流程：浏览器 confirm → `DELETE /api/images/{key}` 带 `X-API-Key` → 成功卡片移除并刷新计数，计数归零时刷新页面；401 提示去上传页填 Key
-6. **空状态**：单张居中卡（64px 上下留白）：「还没有图片」+ 一句引导 + 酸性黄绿「去上传」链接按钮
+2. **鉴权门禁（D4.7）**：页面为无数据壳；加载时检查 localStorage API Key，无 Key 强制跳转 `/upload`；有 Key 则 `GET /api/gallery`（带 `X-API-Key`）拉取列表渲染，401 时清 Key 并回 `/upload`
+3. 头部行：标题「画廊」+ 右侧等宽计数 `N 张图片`
+4. **网格**：`repeat(auto-fill, minmax(240px, 1fr))`，卡片 `--carbon` 底 12px 圆角发丝边框，hover 边框提亮 `--smoke`
+5. 卡片：4:3 图片区（`?raw=1`，cover，lazy 加载）→ 徽标行（格式 / 尺寸 / 大小 / 时间，pill 等宽）→ key 路径行（等宽、省略号）→ 操作组：URL / Markdown / HTML / BBCode 四个幽灵按钮 + 右侧 `--coral-red`「删除」（间距隔开）
+6. 删除流程：浏览器 confirm → `DELETE /api/images/{key}` 带 `X-API-Key` → 成功卡片移除并刷新计数，计数归零时刷新页面；401 提示去上传页填 Key
+7. **空状态**：单张居中卡（64px 上下留白）：「还没有图片」+ 一句引导 + 酸性黄绿「去上传」链接按钮
 
 ## 7. Do / Don't
 

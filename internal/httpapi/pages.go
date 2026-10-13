@@ -7,71 +7,62 @@ import (
 	"github.com/mcpic/mcpic/internal/meta"
 )
 
-// galleryItem 是画廊页一张卡片的模板数据（含四格式复制内容）。
-type galleryItem struct {
-	Key        string
-	Format     string
-	Width      int
-	Height     int
-	Size       string
-	Created    string
-	RawURL     string
-	URL        string
-	Markdown   string
-	HTML       string
-	BBCode     string
-	JSURL      string
-	JSMarkdown string
-	JSHTML     string
-	JSBBCode   string
+// galleryImage 是 /api/gallery JSON 列表项（D4.7 P4：列表数据只经鉴权 API 暴露）。
+type galleryImage struct {
+	Key      string `json:"key"`
+	Format   string `json:"format"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+	Size     int64  `json:"size"`
+	Created  string `json:"created"`
+	URL      string `json:"url"`
+	Markdown string `json:"markdown"`
+	HTML     string `json:"html"`
+	BBCode   string `json:"bbcode"`
 }
 
-// galleryData 是画廊页模板数据。
-type galleryData struct {
-	Items []galleryItem
-	Count int
-}
-
-// handleUploadPage 渲染上传页（拖拽 + 粘贴，PRD 9）。
+// handleUploadPage 渲染上传页（拖拽 + 粘贴 + 多选队列，PRD 9）。
 func (s *Server) handleUploadPage(w http.ResponseWriter, _ *http.Request) {
 	s.writeStatic(w, "static/upload.html")
 }
 
-// handleGallery 渲染画廊页：网格展示最近上传的图片（PRD 9）。
-func (s *Server) handleGallery(w http.ResponseWriter, r *http.Request) {
+// handleGallery 返回画廊壳页（D4.7 P4）：页面本身不含任何图片数据，
+// 列表由前端持 localStorage 中的 API Key 调用 /api/gallery 渲染；
+// 无 Key 时前端强制跳转 /upload。
+func (s *Server) handleGallery(w http.ResponseWriter, _ *http.Request) {
+	s.writeStatic(w, "static/gallery.html")
+}
+
+// handleAPIGallery 实现 GET /api/gallery（withAuth 保护）：返回最近图片列表。
+func (s *Server) handleAPIGallery(w http.ResponseWriter, r *http.Request) {
 	imgs, err := s.svc.ListImages(r.Context(), 100)
 	if err != nil {
 		writeAppError(w, err)
 		return
 	}
 	base := getBaseURL(s.cfg, r)
-	data := galleryData{Items: make([]galleryItem, 0, len(imgs)), Count: len(imgs)}
+	items := make([]galleryImage, 0, len(imgs))
 	for _, img := range imgs {
-		data.Items = append(data.Items, s.galleryItem(img, base))
+		items = append(items, s.galleryImage(img, base))
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusOK)
-	if err := galleryPageTmpl.Execute(w, data); err != nil {
-		logTemplateError("gallery", err)
-	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
-// galleryItem 组装单张卡片数据。
-func (s *Server) galleryItem(img meta.Image, base string) galleryItem {
+// galleryImage 组装单张图片的列表数据。
+func (s *Server) galleryImage(img meta.Image, base string) galleryImage {
 	rel := s.svc.URL(img.Key)
 	url := base + rel
-	md := "![image](" + url + ")"
-	html := `<img src="` + url + `" alt="image">`
-	bb := "[img]" + url + "[/img]"
-	return galleryItem{
-		Key: img.Key, Format: img.Format,
-		Width: img.Width, Height: img.Height,
-		Size:    humanSize(img.Size),
-		Created: img.CreatedAt.Local().Format("2006-01-02 15:04"),
-		RawURL:  rel + "?raw=1",
-		URL:     url, Markdown: md, HTML: html, BBCode: bb,
-		JSURL: url, JSMarkdown: md, JSHTML: html, JSBBCode: bb,
+	return galleryImage{
+		Key:      img.Key,
+		Format:   img.Format,
+		Width:    img.Width,
+		Height:   img.Height,
+		Size:     img.Size,
+		Created:  img.CreatedAt.Local().Format("2006-01-02 15:04"),
+		URL:      url,
+		Markdown: "![image](" + url + ")",
+		HTML:     `<img src="` + url + `" alt="image">`,
+		BBCode:   "[img]" + url + "[/img]",
 	}
 }
 

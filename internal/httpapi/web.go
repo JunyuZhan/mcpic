@@ -14,23 +14,17 @@ import (
 var staticFS embed.FS
 
 var imagePageTmpl = template.Must(template.ParseFS(staticFS, "static/image.html"))
-var galleryPageTmpl = template.Must(template.ParseFS(staticFS, "static/gallery.html"))
+var homePageTmpl = template.Must(template.ParseFS(staticFS, "static/index.html"))
 
 // handleHome 首页：项目说明、快速开始、MCP 配置示例、API 速查（PRD 第 9 节）。
-func (s *Server) handleHome(w http.ResponseWriter, _ *http.Request) {
-	data, err := staticFS.ReadFile("static/index.html")
-	if err != nil {
-		// embed 的文件不可能读失败；真失败时给出可执行指引而非模糊错误。
-		writeJSON(w, http.StatusInternalServerError, errorResponse{
-			Error:   "STORAGE_ERROR",
-			Message: "内嵌首页资源缺失：请重新构建二进制",
-		})
-		return
-	}
+// D4.7 P3：MCP 配置示例的 BASE_URL 由服务端注入（配置值或请求推断），禁止硬编码域名。
+func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(data)
+	if err := homePageTmpl.Execute(w, map[string]string{"BaseURL": getBaseURL(s.cfg, r)}); err != nil {
+		logTemplateError("home", err)
+	}
 }
 
 // imagePageData 是图片页模板数据。

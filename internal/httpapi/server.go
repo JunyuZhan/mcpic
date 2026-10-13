@@ -29,6 +29,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /upload", s.handleUploadPage)
 	mux.HandleFunc("GET /gallery", s.handleGallery)
 	mux.HandleFunc("POST /api/upload", s.withAuth(s.handleUpload))
+	mux.HandleFunc("GET /api/gallery", s.withAuth(s.handleAPIGallery))
 	mux.HandleFunc("DELETE /api/images/{key}", s.withAuth(s.handleDeleteImage))
 	mux.HandleFunc("GET /i/{key}", s.handleImage)
 	return mux

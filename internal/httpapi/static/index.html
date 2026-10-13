@@ -85,8 +85,8 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
       <div class="step">03 · 拿链接</div>
       <h3>返回 URL 与 Markdown</h3>
       <div class="codeblock">{
-  "url": "https://mcpic.cn/i/abc123",
-  "markdown": "![image](https://mcpic.cn/i/abc123)",
+  "url": "{{.BaseURL}}/i/abc123",
+  "markdown": "![image]({{.BaseURL}}/i/abc123)",
   "size": 184320, "width": 1920,
   "height": 1080, "format": "webp"
 }</div>
@@ -97,7 +97,7 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
 <section>
   <h2>MCP 配置（Claude Code 等 Agent）</h2>
   <div class="card">
-    <div class="card-head"><h3>MCP 配置 JSON</h3><button class="ghost" data-copy='{"mcpServers":{"mcpic":{"command":"/usr/local/bin/mcpic","args":["mcp"],"env":{"MCPIC_STORAGE_PATH":"/data/uploads","MCPIC_API_KEY":"your-secret-key","MCPIC_BASE_URL":"https://mcpic.cn"}}}}'>复制</button></div>
+    <div class="card-head"><h3>MCP 配置 JSON</h3><button class="ghost" data-copy='{"mcpServers":{"mcpic":{"command":"/usr/local/bin/mcpic","args":["mcp"],"env":{"MCPIC_STORAGE_PATH":"/data/uploads","MCPIC_API_KEY":"your-secret-key","MCPIC_BASE_URL":"{{.BaseURL}}"}}}}'>复制</button></div>
     <div class="codeblock">{
   "mcpServers": {
     "mcpic": {
@@ -106,7 +106,7 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
       "env": {
         "MCPIC_STORAGE_PATH": "/data/uploads",
         "MCPIC_API_KEY": "your-secret-key",
-        "MCPIC_BASE_URL": "https://mcpic.cn"
+        "MCPIC_BASE_URL": "{{.BaseURL}}"
       }
     }
   }
@@ -130,7 +130,7 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
 <footer>
   <span>AGPL-3.0-only</span>
   <span>PRD v3.2</span>
-  <span>上传自动转 WebP · 最大 10MB · PNG/JPEG → WebP(85) · 超宽等比缩放</span>
+  <span>上传自动转 WebP · 最大 10MB（超 3MB 前端预压缩）· PNG/JPEG → WebP(85) · 超宽等比缩放</span>
 </footer>
 </div>
 <script>

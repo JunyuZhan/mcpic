@@ -30,6 +30,41 @@
 
 <!-- 最新日报插入在此行下方 -->
 
+## 2026-10-13（第 1 天续 · 阶段 D4.7 · 线上验收修复）
+
+### 背景（Dogfooding 严格黑盒验收）
+用户在 NAS 线上环境黑盒验收发现三类问题，批准 D4.7 修复（Feature Freeze 局部解冻，只修不加）。
+
+### 修复内容
+| 编号 | 问题 | 修复 |
+| :--- | :--- | :--- |
+| P3 | 首页 MCP 配置示例硬编码 `https://mcpic.cn`，用户照抄会拿到死域名 | `index.html` 转 `html/template`，4 处注入 `{{.BaseURL}}`（`MCPIC_BASE_URL` 配置值，空则请求 Host 四级回退）；复制按钮 data-copy JSON 同步动态 |
+| P4 | `/gallery` 免鉴权泄露全部图片列表 | 双层防护：① `/gallery` 改无数据壳页（客户端渲染）；② 列表数据仅经 `GET /api/gallery`（`withAuth`）返回；前端 localStorage 无 Key 跳 `/upload`，401 清 Key 回 `/upload`；`/i/{key}` 直链保持公开（可分享场景） |
+| 宣传不符 | CF 隧道 ~3MB 带宽墙 vs 文案 10MB | 选预压缩方案保留 10MB：`compressIfLarge()` 对 >3MB 非 GIF 图前端 Canvas 预压缩（长边 1920、`toBlob('image/webp', 0.85)`），解码失败/GIF 原样上传；文案标注「超 3MB 自动预压缩」 |
+
+### 实现要点
+- `handleHome` 模板化：`homePageTmpl.Execute(BaseURL: getBaseURL(cfg, r))`
+- 新路由 `GET /api/gallery`（withAuth）返回 `{items:[{key,format,width,height,size,created,url,markdown,html,bbcode}]}`
+- `gallery.html` 重写为壳页：`load()` 门禁 + fetch 渲染 + 事件委托删除；大小展示前端 `fmtSize`
+- `upload.html`：`compressIfLarge` 接入 `pump()` 上传前链路（压缩期间状态显示「上传中」）
+- 测试：`TestHomeDynamicBaseURL`（无配置推断 Host / 显式配置用配置值，均断言无 mcpic.cn）、`TestGalleryShellAndAPIAuth`（壳无数据 + API 401×2/200）、`TestGalleryUploadDeleteFlow` 改走 API、`TestUploadPage` 加预压缩断言
+
+### 验收标准通过情况
+| 编号 | 条目 | 结果 | 说明 |
+| :--- | :--- | :--- | :--- |
+| A1–A10 | 既有验收 | ✅ | `make test` 全绿、`make lint` 干净 |
+| D4.7 | P3 域名动态注入 | ✅ | curl 实测 `MCPIC_BASE_URL":"https://mcpic.yunzhang.online`，全文 0 处 mcpic.cn |
+| D4.7 | P4 画廊鉴权 | ✅ | curl：API 无 key 401 / 有 key 200；CDP：无 key 访问 /gallery 自动跳 /upload，有 key 渲染 44 张 |
+| D4.7 | 3MB 预压缩 | ✅ | 前端逻辑 + 文案；线上重建后以真实大图复验 |
+
+### 阻塞 / 需人类决策
+- （无）
+
+### 明天计划
+- 推送后用户 NAS `git pull && docker compose up -d --build` 重建复验
+
+---
+
 ## 2026-10-13（第 1 天续 · 阶段 D4.6 · 多文件队列上传）
 
 ### 范围与约束（人类批准，Feature Freeze 局部解冻）

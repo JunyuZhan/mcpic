@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- 线上验收问题（D4.7）：
+  - P3 首页 MCP 配置示例硬编码 `https://mcpic.cn` → 服务端模板注入 `MCPIC_BASE_URL`（配置值或请求 Host 推断）
+  - P4 画廊隐私泄露：`/gallery` 改为无数据壳页，图片列表仅经鉴权 API `GET /api/gallery`（`X-API-Key`）返回；前端 localStorage 无 Key 强制跳转 `/upload`
+  - 3MB 隧道带宽墙：上传页对超过 3MB 的非 GIF 图片自动前端预压缩（长边 1920、WebP 质量 85），文案说明预压缩行为
+
 ### Added
 - 上传页多文件队列（D4.6）：文件选择/拖拽/粘贴支持多选，前端串行队列逐张上传（避免并发写 SQLite），整体进度「N/M」展示，失败项单独标红并支持逐张重试；结果为每张四格式复制（URL/Markdown/HTML/BBCode）。纯前端改动，后端零变化
 - 项目文档：PRD v3.2、Agent 宪法（`docs/AGENT_CONSTITUTION.md`）、CHANGELOG、开发日志模板
