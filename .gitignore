@@ -3,3 +3,7 @@
 *.db
 *.db-wal
 *.db-shm
+
+# 测试报告与测试产物（不入库）
+MCP-*.md
+test-image.png
