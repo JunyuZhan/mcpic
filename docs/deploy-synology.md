@@ -1,6 +1,6 @@
 # 群晖 NAS + Docker + Cloudflare Tunnel 部署指南
 
-> 适用：MCPic v1.0.0，群晖 DSM 7.2+（Container Manager），Cloudflare Tunnel（cloudflared）。
+> 适用：MCPic v1.0.1，群晖 DSM 7.2+（Container Manager），Cloudflare Tunnel（cloudflared）。
 > 目标：在群晖上长期运行 MCPic HTTP 服务，经 Cloudflare Tunnel 对外提供 HTTPS 链接，
 > 并让 AI Agent（Claude Code / Claude Desktop / WorkBuddy 等）通过 MCP 上传 NAS 目录里的图片。
 
@@ -28,66 +28,43 @@ AI Agent（电脑）
 
 ---
 
-## 1. 准备 Docker 镜像
+## 1. 获取源码（群晖本地构建）
 
-在有本仓库的机器上构建，导出后导入群晖：
+在群晖上直接从 GitHub 拉源码并**本地构建**：零中转、零跨架构风险
+（Mac 多为 Apple Silicon/ARM，群晖为 x86_64，跨机构建的镜像无法在 NAS 上运行）。
 
 ```bash
-# 1) 构建（仓库根目录）
-docker build -t mcpic/mcpic:v1.0.0 .
-
-# 2) 导出为 tar（约 37MB）
-docker save mcpic/mcpic:v1.0.0 -o mcpic-v1.0.0.tar
-
-# 3) 导入群晖，二选一
-#    a. Container Manager → 映像 → 新增 → 从文件添加（界面导入 mcpic-v1.0.0.tar）
-#    b. SSH 到 NAS 后执行：docker load -i mcpic-v1.0.0.tar
+# SSH 到 NAS（控制面板 → 终端机和 SNMP → 启用 SSH）
+cd /volume1/docker
+git clone https://github.com/JunyuZhan/mcpic.git
+cd mcpic
 ```
 
-群晖 SSH：控制面板 → 终端机和 SNMP → 启用 SSH；导入后 `docker images` 应能看到
-`mcpic/mcpic:v1.0.0`。
+> 落点必须是 `/volume1/docker/mcpic`（含 `Dockerfile` 与自带 `docker-compose.yml`）。
+> 也可用 Container Manager 的 Git 拉取或 File Station 上传源码，目录结构要求相同。
 
 ---
 
-## 2. docker-compose.yml（Container Manager 项目）
+## 2. 启动（docker compose 本地构建）
 
-Container Manager → 项目 → 新增 → 命名 `mcpic` → 从模板创建，粘贴以下内容：
+仓库自带 `docker-compose.yml`（`build: .`，与 `Dockerfile` 同目录构建，标签 v1.0.1）。启动前编辑三个占位符：
 
-```yaml
-services:
-  mcpic:
-    image: mcpic/mcpic:v1.0.0
-    container_name: mcpic
-    restart: unless-stopped
-    ports:
-      # 只绑定本机回环：外网一律走 Cloudflare Tunnel，不暴露 NAS 端口
-      - "127.0.0.1:18080:8080"
-    environment:
-      # ① HTTP 上传接口的鉴权密钥（MCP stdio 不校验此值，它只保护 /api/upload）
-      MCPIC_API_KEY: "REPLACE_WITH_openssl_rand_hex_32"
-      # ② 存储路径（容器内固定 /data，由下方 volume 映射到 NAS）
-      MCPIC_STORAGE_PATH: "/data"
-      # ③ 生成链接的对外地址 = 你的 Cloudflare Tunnel 域名（必须 https）
-      MCPIC_BASE_URL: "https://pic.example.com"
-      # ④ 路径白名单：仅对 `mcpic mcp` 生效（见 §6）；放在这里的值供 ssh 方案复用
-      MCPIC_ALLOWED_PATHS: "/volume1/homes/agent/inbox:/volume1/photo/inbox"
-    volumes:
-      # 数据持久化：图片 + mcpic.db 都在这个目录
-      - /volume1/docker/mcpic/data:/data
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: "REPLACE_WITH_YOUR_TUNNEL_TOKEN"
-    depends_on:
-      - mcpic
+```bash
+vi /volume1/docker/mcpic/docker-compose.yml
+# ① MCPIC_API_KEY  ← openssl rand -hex 32 生成的 64 位随机串
+# ② MCPIC_BASE_URL ← https://你的隧道域名（见 §4）
+# ③ TUNNEL_TOKEN   ← Cloudflare 隧道 Token（见 §4）
 ```
 
-> 两个服务在同一项目网络内，cloudflared 可直接用 `http://mcpic:8080` 回源（见 §5）。
-> 若你已有在跑的 cloudflared，可删除本文件的 cloudflared 段，改用现有 tunnel 的 ingress 加一条。
+然后构建并启动（首次构建在 NAS 上下载 golang:1.26-alpine 并编译，约几分钟）：
+
+```bash
+cd /volume1/docker/mcpic && docker compose up -d --build
+```
+
+> Container Manager GUI 方式：项目 → 新增 → 选择目录 `/volume1/docker/mcpic`
+> （使用其自带 docker-compose.yml）→ 启动。
+> 若你已有在跑的 cloudflared，删除 compose 中的 cloudflared 段，改用现有 tunnel 的 ingress 加一条（见 §4）。
 
 ---
 
@@ -111,7 +88,7 @@ openssl rand -hex 32
 ## 4. Cloudflare Tunnel 配置
 
 1. **创建隧道**（Cloudflare Zero Trust → Networks → Tunnels → Create）：
-   - 选择 Docker 方式，拿到 `TUNNEL_TOKEN`，填入上方 compose 的 `TUNNEL_TOKEN`。
+   - 选择 Docker 方式，拿到 `TUNNEL_TOKEN`，填入 `docker-compose.yml` 的 `TUNNEL_TOKEN`。
 2. **配置公网域名**（同一页面 → Public Hostname → Add）：
    - Subdomain: `pic`，Domain: `example.com` → 完整域名 `pic.example.com`
    - Service: **HTTP**，URL: **`http://mcpic:8080`**（同 compose 网络内直连，无需宿主机端口）
@@ -213,7 +190,7 @@ MCP 在电脑上执行，`path` 是电脑路径（含 SMB 挂载的 NAS 目录�
 | 3 | 上传 API（带 Key） | 返回 `https://pic.example.com/i/...` |
 | 4 | 浏览器打开该 URL | 预览页 200；`?raw=1` 返回图片 |
 | 5 | MCP `upload_image(path=...)` | 返回 URL 且链接可打开（铁律验证） |
-| 6 | `upload_image(path=..., max_width=400)` | 下载后宽度 400px（v1.0.0 回归点） |
+| 6 | `upload_image(path=..., max_width=400)` | 下载后宽度 400px（v1 回归点） |
 | 7 | `upload_image(path=..., format="original")` | 下载后格式为原格式 |
 | 8 | NAS 重启后 | Container Manager 自动拉起，旧链接仍可访问 |
 
@@ -232,4 +209,4 @@ MCP 在电脑上执行，`path` 是电脑路径（含 SMB 挂载的 NAS 目录�
 
 ---
 
-*v1.0.0 部署指南 · 变更前请先提交 issue 讨论（v1 已冻结）。*
+*v1.0.1 部署指南 · 变更前请先提交 issue 讨论（v1 已冻结）。*
