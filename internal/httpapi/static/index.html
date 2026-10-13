@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCPic — 让 AI Agent 上传图片像写文件一样自然</title>
+<style>
+:root{
+  --void:#08090a; --carbon:#0f1011; --obsidian:#161718;
+  --graphite:#23252a; --smoke:#383b3f; --ash:#62666d;
+  --fog:#8a8f98; --mist:#d0d6e0; --bone:#e5e5e6; --paper:#ffffff;
+  --acid-lime:#e4f222; --pulse-green:#27a644; --coral-red:#eb5757;
+  --font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--void);color:var(--mist);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--mist);text-decoration:none}
+a:hover{color:var(--paper)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-size:16px;font-weight:600;color:var(--paper);letter-spacing:-.011em}
+.logo span{color:var(--acid-lime)}
+.pill{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:4px 12px;font-size:12px}
+.hero{padding:96px 0 64px}
+.hero h1{font-size:56px;font-weight:600;line-height:1.05;letter-spacing:-.022em;color:var(--paper);max-width:820px}
+.hero p{margin-top:20px;font-size:17px;color:var(--fog);max-width:640px}
+section{padding:32px 0}
+h2{font-size:13px;font-weight:500;color:var(--ash);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:24px}
+.card h3{font-size:15px;font-weight:550;color:var(--paper);margin-bottom:8px}
+.card p{font-size:14px;color:var(--fog);line-height:1.6}
+.step{font-family:var(--font-mono);font-size:12px;color:var(--acid-lime);margin-bottom:12px}
+.codeblock{background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:16px;font-family:var(--font-mono);font-size:13px;line-height:1.6;color:var(--mist);overflow-x:auto;white-space:pre}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.ghost{flex-shrink:0;background:var(--obsidian);border:1px solid var(--graphite);color:var(--mist);border-radius:6px;padding:4px 10px;font-size:12px;line-height:1.4;font-family:var(--font-sans);cursor:pointer}
+.ghost:hover{border-color:var(--smoke);color:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--graphite)}
+th{font-size:12px;font-weight:500;color:var(--ash);text-transform:uppercase;letter-spacing:.06em}
+td{color:var(--mist)}
+td code,code{font-family:var(--font-mono);font-size:13px;color:var(--bone);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px}
+.method{font-family:var(--font-mono);font-size:12px;color:var(--acid-lime)}
+footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);font-size:13px;color:var(--ash);display:flex;gap:24px;flex-wrap:wrap}
+@media(max-width:640px){.hero h1{font-size:36px}.hero{padding:64px 0 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <div class="logo">MCP<span>ic</span></div>
+  <span class="pill">self-hosted image bed</span>
+</nav>
+
+<div class="hero">
+  <h1>让 AI Agent 上传图片像写文件一样自然</h1>
+  <p>MCPic 是一个自托管图床：接收图片、格式转换与缩放、返回可直接引用的链接与 Markdown。零配置、单二进制、无外部依赖。</p>
+</div>
+
+<section>
+  <h2>快速开始</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="step">01 · 启动</div>
+      <div class="card-head"><h3>Docker 一键运行</h3><button class="ghost" data-copy="docker run -d -p 8080:8080 -v mcpic-data:/data -e MCPIC_API_KEY=your-secret-key mcpic/mcpic:latest">复制</button></div>
+      <div class="codeblock">docker run -d -p 8080:8080 \
+  -v mcpic-data:/data \
+  -e MCPIC_API_KEY=your-secret-key \
+  mcpic/mcpic:latest</div>
+    </div>
+    <div class="card">
+      <div class="step">02 · 上传</div>
+      <div class="card-head"><h3>curl 直接传图</h3><button class="ghost" data-copy="curl -X POST http://localhost:8080/api/upload -H 'X-API-Key: your-secret-key' -F 'file=@screenshot.png'">复制</button></div>
+      <div class="codeblock">curl -X POST http://localhost:8080/api/upload \
+  -H "X-API-Key: your-secret-key" \
+  -F "file=@screenshot.png"</div>
+    </div>
+    <div class="card">
+      <div class="step">03 · 拿链接</div>
+      <h3>返回 URL 与 Markdown</h3>
+      <div class="codeblock">{
+  "url": "https://mcpic.cn/i/abc123",
+  "markdown": "![image](https://mcpic.cn/i/abc123)",
+  "size": 184320, "width": 1920,
+  "height": 1080, "format": "webp"
+}</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>MCP 配置（Claude Code 等 Agent）</h2>
+  <div class="card">
+    <div class="card-head"><h3>MCP 配置 JSON</h3><button class="ghost" data-copy='{"mcpServers":{"mcpic":{"command":"/usr/local/bin/mcpic","args":["mcp"],"env":{"MCPIC_STORAGE_PATH":"/data/uploads","MCPIC_API_KEY":"your-secret-key","MCPIC_BASE_URL":"https://mcpic.cn"}}}}'>复制</button></div>
+    <div class="codeblock">{
+  "mcpServers": {
+    "mcpic": {
+      "command": "/usr/local/bin/mcpic",
+      "args": ["mcp"],
+      "env": {
+        "MCPIC_STORAGE_PATH": "/data/uploads",
+        "MCPIC_API_KEY": "your-secret-key",
+        "MCPIC_BASE_URL": "https://mcpic.cn"
+      }
+    }
+  }
+}</div>
+    <p style="margin-top:16px;font-size:14px;color:var(--fog)">配置后 Agent 可调用 <code>upload_image</code>，支持 <code>path</code>（本地绝对路径）、<code>url</code>（远程图片）、<code>data</code>（base64）三种来源，可选 <code>format</code>（webp/original）与 <code>max_width</code>（默认 1920）。</p>
+  </div>
+</section>
+
+<section>
+  <h2>API 速查</h2>
+  <div class="card" style="padding:8px 16px">
+    <table>
+      <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+      <tr><td class="method">POST</td><td><code>/api/upload</code></td><td>上传（multipart 或 JSON base64），需 <code>X-API-Key</code></td></tr>
+      <tr><td class="method">GET</td><td><code>/i/:key</code></td><td>访问图片（浏览器打开显示预览页，<code>?raw=1</code> 取原图）</td></tr>
+      <tr><td class="method">GET</td><td><code>/healthz</code></td><td>健康检查</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <span>AGPL-3.0-only</span>
+  <span>PRD v3.2</span>
+  <span>上传自动转 WebP · 最大 10MB · PNG/JPEG → WebP(85) · 超宽等比缩放</span>
+</footer>
+</div>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.getAttribute('data-copy');
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(function(){
+      var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy')}catch(e){}document.body.removeChild(ta);
+    });
+    var o=b.textContent;b.textContent='已复制';setTimeout(function(){b.textContent=o},1200);
+  });
+});
+</script>
+</body>
+</html>

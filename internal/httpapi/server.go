@@ -24,6 +24,7 @@ func New(cfg *config.Config, svc *service.Service) *Server {
 // 未实现的 /metrics 属于 D4 范围，此处不注册（宪法 4.4：不留假桩）。
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", s.handleHome)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("POST /api/upload", s.withAuth(s.handleUpload))
 	mux.HandleFunc("GET /i/{key}", s.handleImage)

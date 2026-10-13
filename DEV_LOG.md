@@ -30,6 +30,46 @@
 
 <!-- 最新日报插入在此行下方 -->
 
+## 2026-10-13（第 1 天续 · 阶段 D4）
+
+### 本阶段完成
+- Docker 镜像（A1）：`Dockerfile` 多阶段构建（golang:1.26-alpine → alpine + CA 证书，`CGO_ENABLED=0`，非 root 用户，`/data` volume）+ `.dockerignore`
+- `DESIGN.md`：基于 Refero "Linear — midnight precision instrument" 暗色系规范裁剪（tokens / 字体 / 间距 / 组件 / 页面 / Do-Don't），适配原生 HTML 单二进制约束
+- 原生页面（PRD 第 9 节，无前端构建链）：
+  - 首页 `GET /`：项目说明、三步快速开始、**MCP 配置示例**、API 速查、页脚
+  - 图片页 `GET /i/:key`：内容协商（`Accept: text/html` → 预览页；否则图片字节，`?raw=1` 强制原图），图片预览 + 元数据 + **一键复制 Markdown**/URL
+  - `go:embed` 嵌入二进制；`GET /{$}` 精确匹配避免 catch-all
+- `README.md`：Docker/本地启动、环境变量表、MCP 配置、API 示例
+- 新增测试：`web_test.go`（首页要素、图片页 HTML、`image/*` 仍返回图片字节）
+- 视觉验收：Chrome headless 截图两页，修复代码块复制按钮与首行文字重叠（按钮移至卡片标题行）
+
+### 验收标准全量回归
+| 编号 | 条件 | 结果 | 说明 |
+| :--- | :--- | :--- | :--- |
+| A1 | `docker run` 后 30 秒内可上传 | ✅ | 容器启动 0s 完成 healthz+上传，返回 200 image/webp |
+| A2 | Claude Code 配置 MCP 后可上传本地文件 | ✅* | stdio 等价实测通过；Claude Code 实机配置待人类执行 |
+| A3 | 上传 PNG 返回 WebP 链接 | ✅ | 7MB PNG → 669,670B WebP，下载 `RIFF` |
+| A4 | 不存在的路径返回明确错误 | ✅ | `isError=true`，三要素文案与 PRD 3.1 一致 |
+| A5 | URL 可直接打开 | ✅ | 浏览器（Accept: text/html）→预览页；渲染器/直连→图片字节 |
+| A6 | 重启容器后图片仍可访问 | ✅ | `docker restart` 后 200 image/webp 与预览页均正常 |
+| A7 | 二进制 < 30MB | ✅ | `mcpic` = 23M（`-ldflags "-s -w"`） |
+| A8 | 空闲内存 < 50MB | ✅ | `docker stats` 8.0MiB（上传后 15.8MiB） |
+| A9 | 不设 BASE_URL 用请求 Host | ✅ | `Host: test.local` → URL 以 `http://test.local` 开头 |
+| A10 | `/etc/passwd` 返回 PATH_NOT_ALLOWED | ✅ | 三要素齐全（含 `MCPIC_ALLOWED_PATHS` 指引） |
+
+### 全量质量门禁
+- `gofmt -l`（空）+ `go vet` 通过；`go test ./... -count=1` 5 包全绿
+- 镜像 `mcpic/mcpic:test` 构建成功（37.1MB）
+
+### 阻塞 / 需人类决策
+- **D4 提交批准**：等待人类批准后执行 `git add` + `feat: 完成 D4 Docker 镜像与原生页面`（宪法第十条）
+- A2 实机：需要在 Claude Code 中写入 MCP 配置（README 已给出示例）
+
+### 明天计划
+- 人类确认 D4 提交；A2 Claude Code 实机验收；如需发布打 tag
+
+---
+
 ## 2026-10-13（第 1 天续 · 阶段 D3）
 
 ### 本阶段完成

@@ -20,6 +20,10 @@
 - 远程 URL 下载上传（超时与大小预检）
 - 三段式失败文案：错误类型 / 相关输入 / 下一步建议（PRD 3.1）
 - 单元测试（storage / imgproc / service / httpapi）与 Makefile（build / test / lint / run）
+- Docker 多阶段镜像：`Dockerfile`（静态二进制 + CA 证书 + 非 root + `/data` volume）与 `.dockerignore`
+- 原生 HTML 首页（项目说明、快速开始、MCP 配置示例、API 速查）与图片预览页（一键复制 Markdown），`go:embed` 嵌入、`Accept` 内容协商、`?raw=1` 取原图
+- `DESIGN.md` 设计规范（暗色系，基于 Refero Linear 风格裁剪）与 `README.md` 部署/MCP 配置文档
+- 页面与内容协商测试（`web_test.go`）
 
 ## [0.1.0] - 未发布
 
