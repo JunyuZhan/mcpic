@@ -26,7 +26,14 @@ func TestUploadPage(t *testing.T) {
 	}
 	body, _ := io.ReadAll(resp.Body)
 	html := string(body)
-	for _, want := range []string{"拖拽图片到此处", "paste", "apikey", "v-md", "v-html", "v-bb", "/gallery"} {
+	for _, want := range []string{
+		"拖拽图片到此处", "paste", "apikey", "/gallery",
+		"multiple",      // D4.6 多选
+		"queue",         // D4.6 串行队列
+		"重试",            // D4.6 失败单独重试
+		"上传成功",          // 全部完成状态
+		"data-copy-src", // 结果项四格式复制（动态生成）
+	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("上传页缺少 %q", want)
 		}

@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- 上传页多文件队列（D4.6）：文件选择/拖拽/粘贴支持多选，前端串行队列逐张上传（避免并发写 SQLite），整体进度「N/M」展示，失败项单独标红并支持逐张重试；结果为每张四格式复制（URL/Markdown/HTML/BBCode）。纯前端改动，后端零变化
 - 项目文档：PRD v3.2、Agent 宪法（`docs/AGENT_CONSTITUTION.md`）、CHANGELOG、开发日志模板
 - HTTP 上传接口 `POST /api/upload`（multipart 与 JSON base64），X-API-Key 鉴权
 - 图片访问接口 `GET /i/:key` 与健康检查 `GET /healthz`

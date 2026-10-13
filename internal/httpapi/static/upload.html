@@ -28,31 +28,40 @@ nav{display:flex;align-items:center;justify-content:space-between;height:64px;ga
 .pill{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:4px 12px;font-size:12px}
 h1{font-size:32px;font-weight:600;letter-spacing:-.012em;color:var(--paper);margin:32px 0 8px}
 .sub{color:var(--fog);font-size:15px;margin-bottom:24px}
+.sub kbd{font-family:var(--font-mono);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px;font-size:12px}
 .keyrow{display:flex;gap:8px;align-items:center;margin-bottom:16px}
 .keyrow label{font-size:13px;color:var(--ash);flex-shrink:0}
 .keyrow input{flex:1;background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:8px 12px;color:var(--mist);font-family:var(--font-mono);font-size:13px;outline:none}
 .keyrow input:focus{border-color:var(--smoke)}
+.keyrow button{background:var(--acid-lime);color:var(--void);border:none;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:550;font-family:var(--font-sans);cursor:pointer}
 .hint{font-size:12px;color:var(--ash);margin-bottom:24px}
 .drop{border:1px dashed var(--smoke);border-radius:12px;background:var(--carbon);padding:56px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--acid-lime);background:#111207}
 .drop .big{font-size:18px;color:var(--paper);font-weight:550;margin-bottom:8px}
 .drop .small{font-size:13px;color:var(--fog)}
-.drop .small kbd{font-family:var(--font-mono);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px;font-size:12px}
 .status{margin-top:16px;font-size:14px;min-height:22px}
 .status.err{color:var(--coral-red)}
 .status.ok{color:var(--acid-lime)}
-.card{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:24px;margin-top:24px;display:none}
-.card.show{display:block}
-.card-head{display:flex;gap:16px;align-items:center;margin-bottom:16px}
-.card-head img{width:96px;height:96px;object-fit:cover;border-radius:6px;border:1px solid var(--graphite);background:var(--obsidian)}
-.card-head .meta{font-size:13px;color:var(--fog);font-family:var(--font-mono)}
-.card-head .meta b{color:var(--mist);font-weight:500}
-.fmtrow{display:flex;align-items:center;gap:10px;margin-top:10px}
-.fmtrow .tag{flex-shrink:0;width:76px;font-size:12px;color:var(--ash)}
-.fmtrow .val{flex:1;background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:8px 12px;font-family:var(--font-mono);font-size:13px;color:var(--mist);overflow-x:auto;white-space:nowrap;text-align:left;cursor:text}
-.fmtrow button{flex-shrink:0;background:var(--obsidian);border:1px solid var(--graphite);color:var(--mist);border-radius:6px;padding:6px 12px;font-size:12px;font-family:var(--font-sans);cursor:pointer}
-.fmtrow button:hover{border-color:var(--smoke);color:var(--paper)}
-.btn-upload{background:var(--acid-lime);color:var(--void);border:none;border-radius:6px;padding:10px 16px;font-size:14px;font-weight:550;font-family:var(--font-sans);cursor:pointer}
+#result{display:none;margin-top:24px}
+#result.show{display:block}
+.reshead{font-size:13px;color:var(--ash);margin-bottom:10px}
+.resitem{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:16px;display:flex;gap:14px;margin-bottom:12px}
+.resitem.fail{box-shadow:inset 0 0 0 1px rgba(235,87,87,.55)}
+.resitem.running{opacity:.75}
+.resitem .thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--graphite);background:var(--obsidian);flex-shrink:0}
+.resitem .ph{width:56px;height:56px;border-radius:6px;background:var(--obsidian);border:1px solid var(--graphite);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ash)}
+.resitem .info{flex:1;min-width:0}
+.fname{font-size:13px;color:var(--paper);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fmeta{font-size:12px;color:var(--fog);font-family:var(--font-mono);margin:2px 0 4px}
+.frow{display:flex;align-items:center;gap:8px;margin-top:6px}
+.frow .tag{width:72px;flex-shrink:0;font-size:11px;color:var(--ash)}
+.frow .val{flex:1;background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:5px 10px;font-family:var(--font-mono);font-size:12px;color:var(--mist);overflow-x:auto;white-space:nowrap;text-align:left;cursor:text}
+.frow button{flex-shrink:0;background:var(--obsidian);border:1px solid var(--graphite);color:var(--mist);border-radius:6px;padding:4px 10px;font-size:12px;font-family:var(--font-sans);cursor:pointer}
+.frow button:hover{border-color:var(--smoke);color:var(--paper)}
+.errline{color:var(--coral-red);font-size:13px;margin-top:8px}
+.retry{background:var(--obsidian);border:1px solid var(--coral-red);color:var(--coral-red);border-radius:6px;padding:5px 12px;font-size:12px;font-family:var(--font-sans);cursor:pointer;margin-top:8px}
+.retry:hover{color:var(--paper);border-color:var(--paper)}
+.runline{font-size:13px;color:var(--fog);margin-top:6px}
 footer{margin-top:64px;padding:24px 0 48px;border-top:1px solid var(--graphite);font-size:13px;color:var(--ash)}
 </style>
 </head>
@@ -65,34 +74,24 @@ footer{margin-top:64px;padding:24px 0 48px;border-top:1px solid var(--graphite);
 </nav>
 
 <h1>上传图片</h1>
-<p class="sub">拖拽文件到下方区域，或直接 <kbd style="font-family:var(--font-mono);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px;font-size:12px">Ctrl/Cmd + V</kbd> 粘贴截图。自动转 WebP 并返回四种链接格式。</p>
+<p class="sub">拖拽或点击选择文件（<kbd>Ctrl/Cmd</kbd> 可多选），也可直接 <kbd>Ctrl/Cmd + V</kbd> 粘贴截图。多张时队列串行上传，自动转 WebP 并返回四种链接格式。</p>
 
 <div class="keyrow">
   <label for="apikey">API Key</label>
   <input id="apikey" type="password" placeholder="X-API-Key（写入操作必需，保存在本机 localStorage）" autocomplete="off">
-  <button class="btn-upload" id="savekey" type="button">保存</button>
+  <button id="savekey" type="button">保存</button>
 </div>
-<p class="hint">Key 只存在你的浏览器 localStorage，不会上传到服务器以外的任何地方；清空浏览器存储后重新输入即可。</p>
+<p class="hint">Key 只存在你的浏览器 localStorage；清空浏览器存储后重新输入即可。</p>
 
 <div class="drop" id="drop">
   <div class="big">拖拽图片到此处</div>
-  <div class="small">或点击选择文件 · 支持 PNG / JPEG / GIF / WebP · 最大 10MB</div>
-  <input type="file" id="file" accept="image/*" hidden>
+  <div class="small">或点击选择文件（可多选）· 支持 PNG / JPEG / GIF / WebP · 单张最大 10MB</div>
+  <input type="file" id="file" accept="image/*" multiple hidden>
 </div>
 <div class="status" id="status"></div>
+<div id="result"></div>
 
-<div class="card" id="result">
-  <div class="card-head">
-    <img id="thumb" alt="preview">
-    <div class="meta">尺寸 <b id="dim"></b><br>格式 <b id="fmt"></b><br>大小 <b id="size"></b></div>
-  </div>
-  <div class="fmtrow"><span class="tag">URL</span><span class="val" id="v-url"></span><button data-src="v-url">复制</button></div>
-  <div class="fmtrow"><span class="tag">Markdown</span><span class="val" id="v-md"></span><button data-src="v-md">复制</button></div>
-  <div class="fmtrow"><span class="tag">HTML</span><span class="val" id="v-html"></span><button data-src="v-html">复制</button></div>
-  <div class="fmtrow"><span class="tag">BBCode</span><span class="val" id="v-bb"></span><button data-src="v-bb">复制</button></div>
-</div>
-
-<footer>上传经 X-API-Key 鉴权 · 自动转 WebP(85) · 超宽等比缩放 max_width=1920</footer>
+<footer>上传经 X-API-Key 鉴权 · 队列串行上传 · 自动转 WebP(85) · 超宽等比缩放 max_width=1920</footer>
 </div>
 <script>
 var $ = function(id){ return document.getElementById(id) };
@@ -119,44 +118,155 @@ function copyText(t, btn){
   var o = btn.textContent; btn.textContent = '已复制';
   setTimeout(function(){ btn.textContent = o }, 1200);
 }
-document.querySelectorAll('[data-src]').forEach(function(b){
-  b.addEventListener('click', function(){ copyText($(b.getAttribute('data-src')).textContent, b) });
-});
 
-function upload(file){
-  if(!file){ return }
-  if(!file.type || file.type.indexOf('image/') !== 0){ tip('只支持图片文件：' + file.name, 'err'); return }
-  var key = keyInput.value.trim() || localStorage.getItem('mcpic_api_key') || '';
-  if(!key){ tip('请先在上方填写 API Key', 'err'); keyInput.focus(); return }
-  tip('上传中…');
-  $('result').classList.remove('show');
+function apiKey(){
+  return keyInput.value.trim() || localStorage.getItem('mcpic_api_key') || '';
+}
+
+/* ===== D4.6 多文件串行队列 ===== */
+var queue = [];   /* {file, state: pending|uploading|done|fail, data, error, thumbURL} */
+var active = false;
+
+function isImage(f){ return f && f.type && f.type.indexOf('image/') === 0 }
+
+function addFiles(fl){
+  if(!fl || !fl.length) return;
+  var added = 0, skipped = [];
+  for(var i = 0; i < fl.length; i++){
+    if(!isImage(fl[i])){ skipped.push(fl[i].name); continue }
+    queue.push({ file: fl[i], state: 'pending' });
+    added++;
+  }
+  if(skipped.length) tip('已跳过非图片：' + skipped.join('、'), 'err');
+  if(added){ render(); pump(); }
+}
+
+function pump(){
+  if(active) return;
+  var next = null;
+  for(var i = 0; i < queue.length; i++){ if(queue[i].state === 'pending'){ next = queue[i]; break } }
+  if(!next){ render(); return }
+  var k = apiKey();
+  if(!k){ next.state = 'fail'; next.error = 'API Key 未填写：请在上方填写并保存'; render(); return }
+  next.state = 'uploading';
+  active = true;
+  render();
   var fd = new FormData();
-  fd.append('file', file);
-  fetch('/api/upload', { method: 'POST', headers: { 'X-API-Key': key }, body: fd })
+  fd.append('file', next.file);
+  fetch('/api/upload', { method: 'POST', headers: { 'X-API-Key': k }, body: fd })
     .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j } }) })
     .then(function(res){
-      if(!res.ok){
-        tip('上传失败：' + (res.j.message || res.j.error || '未知错误'), 'err');
-        return;
-      }
-      var d = res.j;
-      $('thumb').src = URL.createObjectURL(file);
-      $('dim').textContent = d.width + '×' + d.height;
-      $('fmt').textContent = d.format;
-      $('size').textContent = d.size + ' B';
-      $('v-url').textContent = d.url;
-      $('v-md').textContent = d.markdown;
-      $('v-html').textContent = '<img src="' + d.url + '" alt="image">';
-      $('v-bb').textContent = '[img]' + d.url + '[/img]';
-      $('result').classList.add('show');
-      tip('上传成功', 'ok');
+      if(res.ok){ next.state = 'done'; next.data = res.j; next.thumbURL = URL.createObjectURL(next.file); }
+      else { next.state = 'fail'; next.error = (res.j.message || res.j.error || '未知错误'); }
     })
-    .catch(function(){ tip('上传失败：网络错误，请重试', 'err') });
+    .catch(function(){ next.state = 'fail'; next.error = '网络错误，请重试'; })
+    .then(function(){ active = false; render(); pump(); });
 }
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+function doneItemHTML(it, i){
+  var d = it.data;
+  var url = d.url;
+  var md = '![image](' + url + ')';
+  var ht = '<img src="' + url + '" alt="image">';
+  var bb = '[img]' + url + '[/img]';
+  return '<div class="resitem">'
+    + '<img class="thumb" alt="preview" src="' + esc(it.thumbURL) + '">'
+    + '<div class="info">'
+    + '<div class="fname" title="' + esc(it.file.name) + '">' + esc(it.file.name) + '</div>'
+    + '<div class="fmeta">' + d.width + '×' + d.height + ' · ' + esc(d.format) + ' · ' + d.size + ' B</div>'
+    + '<div class="frow"><span class="tag">URL</span><span class="val" id="r-' + i + '-u">' + esc(url) + '</span><button data-copy-src="r-' + i + '-u">复制</button></div>'
+    + '<div class="frow"><span class="tag">Markdown</span><span class="val" id="r-' + i + '-m">' + esc(md) + '</span><button data-copy-src="r-' + i + '-m">复制</button></div>'
+    + '<div class="frow"><span class="tag">HTML</span><span class="val" id="r-' + i + '-h">' + esc(ht) + '</span><button data-copy-src="r-' + i + '-h">复制</button></div>'
+    + '<div class="frow"><span class="tag">BBCode</span><span class="val" id="r-' + i + '-b">' + esc(bb) + '</span><button data-copy-src="r-' + i + '-b">复制</button></div>'
+    + '</div></div>';
+}
+
+function failItemHTML(it, i){
+  return '<div class="resitem fail">'
+    + '<div class="ph">✕</div>'
+    + '<div class="info">'
+    + '<div class="fname" title="' + esc(it.file.name) + '">' + esc(it.file.name) + '</div>'
+    + '<div class="errline">上传失败：' + esc(it.error || '未知错误') + '</div>'
+    + '<button class="retry" data-retry="' + i + '">重试</button>'
+    + '</div></div>';
+}
+
+function runItemHTML(it){
+  return '<div class="resitem running">'
+    + '<div class="ph">…</div>'
+    + '<div class="info">'
+    + '<div class="fname" title="' + esc(it.file.name) + '">' + esc(it.file.name) + '</div>'
+    + '<div class="runline">上传中…</div>'
+    + '</div></div>';
+}
+
+function render(){
+  var done = 0, fail = 0, uploading = null, pending = 0, total = queue.length;
+  for(var i = 0; i < total; i++){
+    var s = queue[i].state;
+    if(s === 'done') done++;
+    else if(s === 'fail') fail++;
+    else if(s === 'uploading') uploading = queue[i];
+    else pending++;
+  }
+  var st = $('status');
+  if(uploading){
+    st.className = 'status';
+    st.textContent = (done + fail + 1) + '/' + total + ' · 上传中 ' + uploading.file.name;
+  }else if(pending){
+    st.className = 'status';
+    st.textContent = (done + fail) + '/' + total + ' · 排队中';
+  }else if(total && !fail){
+    st.className = 'status ok';
+    st.textContent = total + ' 张上传成功';
+  }else if(total){
+    st.className = 'status err';
+    st.textContent = done + ' 成功 · ' + fail + ' 失败，可单独重试';
+  }else{
+    st.className = 'status';
+    st.textContent = '';
+  }
+
+  var box = $('result');
+  if(!total){ box.classList.remove('show'); box.innerHTML = ''; return }
+  var html = '<div class="reshead">上传结果（' + total + '）</div>';
+  for(var i = 0; i < total; i++){
+    var it = queue[i];
+    if(it.state === 'done') html += doneItemHTML(it, i);
+    else if(it.state === 'fail') html += failItemHTML(it, i);
+    else if(it.state === 'uploading') html += runItemHTML(it);
+  }
+  box.innerHTML = html;
+  box.classList.add('show');
+}
+
+$('result').addEventListener('click', function(e){
+  var t = e.target;
+  if(t.hasAttribute && t.hasAttribute('data-copy-src')){
+    copyText($(t.getAttribute('data-copy-src')).textContent, t);
+    return;
+  }
+  if(t.hasAttribute && t.hasAttribute('data-retry')){
+    var idx = parseInt(t.getAttribute('data-retry'), 10);
+    if(queue[idx] && queue[idx].state === 'fail'){
+      if(!apiKey()){ tip('请先在上方填写 API Key', 'err'); keyInput.focus(); return }
+      queue[idx].state = 'pending';
+      queue[idx].error = null;
+      render();
+      pump();
+    }
+  }
+});
 
 var drop = $('drop');
 drop.addEventListener('click', function(){ $('file').click() });
-$('file').addEventListener('change', function(e){ upload(e.target.files[0]); e.target.value = '' });
+$('file').addEventListener('change', function(e){ addFiles(e.target.files); e.target.value = '' });
 ['dragenter','dragover'].forEach(function(ev){
   drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over') });
 });
@@ -164,11 +274,11 @@ $('file').addEventListener('change', function(e){ upload(e.target.files[0]); e.t
   drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over') });
 });
 drop.addEventListener('drop', function(e){
-  if(e.dataTransfer && e.dataTransfer.files.length){ upload(e.dataTransfer.files[0]) }
+  if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
 });
 document.addEventListener('paste', function(e){
   if(e.clipboardData && e.clipboardData.files.length){
-    upload(e.clipboardData.files[0]);
+    addFiles(e.clipboardData.files);
     e.preventDefault();
   }
 });
