@@ -25,6 +25,13 @@
 - `DESIGN.md` 设计规范（暗色系，基于 Refero Linear 风格裁剪）与 `README.md` 部署/MCP 配置文档
 - 页面与内容协商测试（`web_test.go`）
 
+### Changed
+- **v1 范围调整：PRD v3.2 → v3.3**（`docs/prd.md` 重命名为 `docs/PRD.md`）
+  - 前端界面从「v1 不做」移入「v1 做」：新增基础 Web 上传页（拖拽 + 粘贴）与画廊页（网格展示、复制链接、删除）
+  - 废除「管理后台是 v2 的事」限制；首页 MCP 配置区块即配置页
+  - 技术约束不变：原生 `html/template` + 内联 CSS + 原生 JS + `go:embed` 单二进制，禁止 React/Vue/Vite 构建工具链；UI 严格遵循 `DESIGN.md`
+  - 宪法 1.1 的 PRD 版本引用同步为 v3.3（人类已批准）
+
 ## [0.1.0] - 未发布
 
 MCPic v1 开发中，目标：通过 PRD 全部 10 条验收标准（A1-A10）。

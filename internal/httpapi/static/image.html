@@ -22,6 +22,9 @@ nav{display:flex;align-items:center;justify-content:space-between;height:64px}
 .logo{font-size:16px;font-weight:600;color:var(--paper);letter-spacing:-.011em}
 .logo span{color:var(--acid-lime)}
 .pill{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:4px 12px;font-size:12px;font-family:var(--font-mono)}
+.nav-links{display:flex;gap:16px;font-size:14px}
+.nav-links a{color:var(--fog)}
+.nav-links a:hover{color:var(--paper)}
 .stage{margin:32px 0 16px;background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:24px;display:flex;justify-content:center}
 .stage img{max-width:100%;max-height:70vh;border-radius:6px}
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
@@ -39,6 +42,7 @@ nav{display:flex;align-items:center;justify-content:space-between;height:64px}
 <div class="wrap">
 <nav>
   <a class="logo" href="/">MCP<span>ic</span></a>
+  <div class="nav-links"><a href="/upload">上传</a><a href="/gallery">画廊</a></div>
   <span class="pill">{{.Key}}</span>
 </nav>
 

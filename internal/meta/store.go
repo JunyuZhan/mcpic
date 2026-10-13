@@ -56,12 +56,12 @@ CREATE TABLE IF NOT EXISTS images (
 	return &Store{db: db}, nil
 }
 
-// Insert 写入一条元数据。
+// Insert 写入一条元数据。时间用 RFC3339Nano 保证同秒内多条记录仍可稳定倒序。
 func (s *Store) Insert(ctx context.Context, img Image) error {
 	const q = `INSERT INTO images (key, format, size, width, height, created_at)
 	           VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := s.db.ExecContext(ctx, q,
-		img.Key, img.Format, img.Size, img.Width, img.Height, img.CreatedAt.UTC().Format(time.RFC3339))
+		img.Key, img.Format, img.Size, img.Width, img.Height, img.CreatedAt.UTC().Format(time.RFC3339Nano))
 	if err != nil {
 		return fmt.Errorf("写入元数据失败: %w", err)
 	}
@@ -84,6 +84,51 @@ func (s *Store) Get(ctx context.Context, key string) (Image, error) {
 		return Image{}, fmt.Errorf("解析元数据时间失败: %w", err)
 	}
 	return img, nil
+}
+
+// List 按创建时间倒序返回最近 limit 条元数据（画廊页用）。
+func (s *Store) List(ctx context.Context, limit int) ([]Image, error) {
+	const q = `SELECT key, format, size, width, height, created_at
+	           FROM images ORDER BY created_at DESC, key DESC LIMIT ?`
+	rows, err := s.db.QueryContext(ctx, q, limit)
+	if err != nil {
+		return nil, fmt.Errorf("查询元数据列表失败: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []Image
+	for rows.Next() {
+		var img Image
+		var created string
+		if err := rows.Scan(&img.Key, &img.Format, &img.Size, &img.Width, &img.Height, &created); err != nil {
+			return nil, fmt.Errorf("读取元数据失败: %w", err)
+		}
+		if img.CreatedAt, err = time.Parse(time.RFC3339, created); err != nil {
+			return nil, fmt.Errorf("解析元数据时间失败: %w", err)
+		}
+		out = append(out, img)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("遍历元数据失败: %w", err)
+	}
+	return out, nil
+}
+
+// Delete 删除一条元数据，不存在时返回 ErrNotFound。
+func (s *Store) Delete(ctx context.Context, key string) error {
+	const q = `DELETE FROM images WHERE key = ?`
+	res, err := s.db.ExecContext(ctx, q, key)
+	if err != nil {
+		return fmt.Errorf("删除元数据失败: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("确认删除结果失败: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // Close 关闭数据库。

@@ -26,7 +26,10 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.handleHome)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
+	mux.HandleFunc("GET /upload", s.handleUploadPage)
+	mux.HandleFunc("GET /gallery", s.handleGallery)
 	mux.HandleFunc("POST /api/upload", s.withAuth(s.handleUpload))
+	mux.HandleFunc("DELETE /api/images/{key}", s.withAuth(s.handleDeleteImage))
 	mux.HandleFunc("GET /i/{key}", s.handleImage)
 	return mux
 }

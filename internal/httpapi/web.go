@@ -10,10 +10,11 @@ import (
 	"github.com/mcpic/mcpic/internal/meta"
 )
 
-//go:embed static/index.html static/image.html
+//go:embed static/*.html
 var staticFS embed.FS
 
 var imagePageTmpl = template.Must(template.ParseFS(staticFS, "static/image.html"))
+var galleryPageTmpl = template.Must(template.ParseFS(staticFS, "static/gallery.html"))
 
 // handleHome 首页：项目说明、快速开始、MCP 配置示例、API 速查（PRD 第 9 节）。
 func (s *Server) handleHome(w http.ResponseWriter, _ *http.Request) {

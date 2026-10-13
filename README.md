@@ -5,7 +5,7 @@
 - 单二进制、零外部依赖（内嵌 SQLite），Docker 一键部署
 - 上传自动转 WebP（质量 85），超宽等比缩放（默认 max_width 1920）
 - 同时提供 HTTP 上传 API 与 MCP Server（`upload_image` 工具）
-- 需求与验收标准见 [docs/prd.md](docs/prd.md)（PRD v3.2），设计规范见 [DESIGN.md](DESIGN.md)
+- 需求与验收标准见 [docs/PRD.md](docs/PRD.md)（PRD v3.3），设计规范见 [DESIGN.md](DESIGN.md)
 
 ## 快速开始
 
@@ -115,7 +115,7 @@ make lint   # gofmt + go vet
 make build  # 输出 ./mcpic
 ```
 
-- 需求：[docs/prd.md](docs/prd.md)（PRD v3.2）
+- 需求：[docs/PRD.md](docs/PRD.md)（PRD v3.3）
 - 行为准则：[docs/AGENT_CONSTITUTION.md](docs/AGENT_CONSTITUTION.md)
 - 变更记录：[CHANGELOG.md](CHANGELOG.md)；开发日志：[DEV_LOG.md](DEV_LOG.md)
 

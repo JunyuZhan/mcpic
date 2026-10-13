@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -171,6 +172,27 @@ func (s *Service) Get(ctx context.Context, key string) (meta.Image, io.ReadClose
 		return meta.Image{}, nil, apperr.StorageError(err)
 	}
 	return img, rc, nil
+}
+
+// ListImages 返回最近上传的图片元数据（画廊页用）。limit 越界时收敛到默认值。
+func (s *Service) ListImages(ctx context.Context, limit int) ([]meta.Image, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	return s.db.List(ctx, limit)
+}
+
+// DeleteImage 删除图片：先删元数据（立即不可见），再删文件。
+// 文件删除失败仅记日志并登记孤儿文件（DEV_LOG），不回滚 DB —— 宁可留孤儿文件，
+// 也不让元数据指向已消失的文件造成裂图。
+func (s *Service) DeleteImage(ctx context.Context, key string) error {
+	if err := s.db.Delete(ctx, key); err != nil {
+		return err
+	}
+	if err := s.st.Delete(ctx, key); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Printf("孤儿文件待清理：删除图片文件失败 key=%s: %v", key, err)
+	}
+	return nil
 }
 
 // checkPath 校验本地路径是否在白名单内（PRD 3.5）。

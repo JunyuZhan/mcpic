@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上传 · MCPic</title>
+<style>
+:root{
+  --void:#08090a; --carbon:#0f1011; --obsidian:#161718;
+  --graphite:#23252a; --smoke:#383b3f; --ash:#62666d;
+  --fog:#8a8f98; --mist:#d0d6e0; --bone:#e5e5e6; --paper:#ffffff;
+  --acid-lime:#e4f222; --coral-red:#eb5757;
+  --font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--void);color:var(--mist);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--mist);text-decoration:none}
+a:hover{color:var(--paper)}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{font-size:16px;font-weight:600;color:var(--paper);letter-spacing:-.011em}
+.logo span{color:var(--acid-lime)}
+.nav-links{display:flex;gap:16px;font-size:14px}
+.nav-links a{color:var(--fog)}
+.nav-links a:hover{color:var(--paper)}
+.nav-links a.active{color:var(--paper)}
+.pill{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:4px 12px;font-size:12px}
+h1{font-size:32px;font-weight:600;letter-spacing:-.012em;color:var(--paper);margin:32px 0 8px}
+.sub{color:var(--fog);font-size:15px;margin-bottom:24px}
+.keyrow{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.keyrow label{font-size:13px;color:var(--ash);flex-shrink:0}
+.keyrow input{flex:1;background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:8px 12px;color:var(--mist);font-family:var(--font-mono);font-size:13px;outline:none}
+.keyrow input:focus{border-color:var(--smoke)}
+.hint{font-size:12px;color:var(--ash);margin-bottom:24px}
+.drop{border:1px dashed var(--smoke);border-radius:12px;background:var(--carbon);padding:56px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--acid-lime);background:#111207}
+.drop .big{font-size:18px;color:var(--paper);font-weight:550;margin-bottom:8px}
+.drop .small{font-size:13px;color:var(--fog)}
+.drop .small kbd{font-family:var(--font-mono);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px;font-size:12px}
+.status{margin-top:16px;font-size:14px;min-height:22px}
+.status.err{color:var(--coral-red)}
+.status.ok{color:var(--acid-lime)}
+.card{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:24px;margin-top:24px;display:none}
+.card.show{display:block}
+.card-head{display:flex;gap:16px;align-items:center;margin-bottom:16px}
+.card-head img{width:96px;height:96px;object-fit:cover;border-radius:6px;border:1px solid var(--graphite);background:var(--obsidian)}
+.card-head .meta{font-size:13px;color:var(--fog);font-family:var(--font-mono)}
+.card-head .meta b{color:var(--mist);font-weight:500}
+.fmtrow{display:flex;align-items:center;gap:10px;margin-top:10px}
+.fmtrow .tag{flex-shrink:0;width:76px;font-size:12px;color:var(--ash)}
+.fmtrow .val{flex:1;background:var(--obsidian);border:1px solid var(--graphite);border-radius:6px;padding:8px 12px;font-family:var(--font-mono);font-size:13px;color:var(--mist);overflow-x:auto;white-space:nowrap;text-align:left;cursor:text}
+.fmtrow button{flex-shrink:0;background:var(--obsidian);border:1px solid var(--graphite);color:var(--mist);border-radius:6px;padding:6px 12px;font-size:12px;font-family:var(--font-sans);cursor:pointer}
+.fmtrow button:hover{border-color:var(--smoke);color:var(--paper)}
+.btn-upload{background:var(--acid-lime);color:var(--void);border:none;border-radius:6px;padding:10px 16px;font-size:14px;font-weight:550;font-family:var(--font-sans);cursor:pointer}
+footer{margin-top:64px;padding:24px 0 48px;border-top:1px solid var(--graphite);font-size:13px;color:var(--ash)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="logo" href="/">MCP<span>ic</span></a>
+  <div class="nav-links"><a href="/upload" class="active">上传</a><a href="/gallery">画廊</a></div>
+  <span class="pill">self-hosted image bed</span>
+</nav>
+
+<h1>上传图片</h1>
+<p class="sub">拖拽文件到下方区域，或直接 <kbd style="font-family:var(--font-mono);background:var(--obsidian);border:1px solid var(--graphite);border-radius:4px;padding:1px 6px;font-size:12px">Ctrl/Cmd + V</kbd> 粘贴截图。自动转 WebP 并返回四种链接格式。</p>
+
+<div class="keyrow">
+  <label for="apikey">API Key</label>
+  <input id="apikey" type="password" placeholder="X-API-Key（写入操作必需，保存在本机 localStorage）" autocomplete="off">
+  <button class="btn-upload" id="savekey" type="button">保存</button>
+</div>
+<p class="hint">Key 只存在你的浏览器 localStorage，不会上传到服务器以外的任何地方；清空浏览器存储后重新输入即可。</p>
+
+<div class="drop" id="drop">
+  <div class="big">拖拽图片到此处</div>
+  <div class="small">或点击选择文件 · 支持 PNG / JPEG / GIF / WebP · 最大 10MB</div>
+  <input type="file" id="file" accept="image/*" hidden>
+</div>
+<div class="status" id="status"></div>
+
+<div class="card" id="result">
+  <div class="card-head">
+    <img id="thumb" alt="preview">
+    <div class="meta">尺寸 <b id="dim"></b><br>格式 <b id="fmt"></b><br>大小 <b id="size"></b></div>
+  </div>
+  <div class="fmtrow"><span class="tag">URL</span><span class="val" id="v-url"></span><button data-src="v-url">复制</button></div>
+  <div class="fmtrow"><span class="tag">Markdown</span><span class="val" id="v-md"></span><button data-src="v-md">复制</button></div>
+  <div class="fmtrow"><span class="tag">HTML</span><span class="val" id="v-html"></span><button data-src="v-html">复制</button></div>
+  <div class="fmtrow"><span class="tag">BBCode</span><span class="val" id="v-bb"></span><button data-src="v-bb">复制</button></div>
+</div>
+
+<footer>上传经 X-API-Key 鉴权 · 自动转 WebP(85) · 超宽等比缩放 max_width=1920</footer>
+</div>
+<script>
+var $ = function(id){ return document.getElementById(id) };
+var keyInput = $('apikey');
+keyInput.value = localStorage.getItem('mcpic_api_key') || '';
+$('savekey').addEventListener('click', function(){
+  localStorage.setItem('mcpic_api_key', keyInput.value.trim());
+  tip('Key 已保存到 localStorage', 'ok');
+});
+
+function tip(msg, cls){
+  var el = $('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function copyText(t, btn){
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function(){
+    var ta = document.createElement('textarea'); ta.value = t;
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy') }catch(e){}
+    document.body.removeChild(ta);
+  });
+  var o = btn.textContent; btn.textContent = '已复制';
+  setTimeout(function(){ btn.textContent = o }, 1200);
+}
+document.querySelectorAll('[data-src]').forEach(function(b){
+  b.addEventListener('click', function(){ copyText($(b.getAttribute('data-src')).textContent, b) });
+});
+
+function upload(file){
+  if(!file){ return }
+  if(!file.type || file.type.indexOf('image/') !== 0){ tip('只支持图片文件：' + file.name, 'err'); return }
+  var key = keyInput.value.trim() || localStorage.getItem('mcpic_api_key') || '';
+  if(!key){ tip('请先在上方填写 API Key', 'err'); keyInput.focus(); return }
+  tip('上传中…');
+  $('result').classList.remove('show');
+  var fd = new FormData();
+  fd.append('file', file);
+  fetch('/api/upload', { method: 'POST', headers: { 'X-API-Key': key }, body: fd })
+    .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j } }) })
+    .then(function(res){
+      if(!res.ok){
+        tip('上传失败：' + (res.j.message || res.j.error || '未知错误'), 'err');
+        return;
+      }
+      var d = res.j;
+      $('thumb').src = URL.createObjectURL(file);
+      $('dim').textContent = d.width + '×' + d.height;
+      $('fmt').textContent = d.format;
+      $('size').textContent = d.size + ' B';
+      $('v-url').textContent = d.url;
+      $('v-md').textContent = d.markdown;
+      $('v-html').textContent = '<img src="' + d.url + '" alt="image">';
+      $('v-bb').textContent = '[img]' + d.url + '[/img]';
+      $('result').classList.add('show');
+      tip('上传成功', 'ok');
+    })
+    .catch(function(){ tip('上传失败：网络错误，请重试', 'err') });
+}
+
+var drop = $('drop');
+drop.addEventListener('click', function(){ $('file').click() });
+$('file').addEventListener('change', function(e){ upload(e.target.files[0]); e.target.value = '' });
+['dragenter','dragover'].forEach(function(ev){
+  drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over') });
+});
+['dragleave','drop'].forEach(function(ev){
+  drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over') });
+});
+drop.addEventListener('drop', function(e){
+  if(e.dataTransfer && e.dataTransfer.files.length){ upload(e.dataTransfer.files[0]) }
+});
+document.addEventListener('paste', function(e){
+  if(e.clipboardData && e.clipboardData.files.length){
+    upload(e.clipboardData.files[0]);
+    e.preventDefault();
+  }
+});
+</script>
+</body>
+</html>

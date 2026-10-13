@@ -30,6 +30,48 @@
 
 <!-- 最新日报插入在此行下方 -->
 
+## 2026-10-13（第 1 天续 · 阶段 D4.5 · 进行中）
+
+### 范围变更（人类指令，PRD v3.2 → v3.3）
+- 「前端界面」从 v1 不做移入 v1 做：**基础 Web 上传与画廊管理**（原「管理后台是 v2 的事」废除）
+- PRD 升级 v3.3 并重命名 `docs/prd.md` → `docs/PRD.md`；第 2 节（范围）、第 9 节（前端）已按指令重写
+- 宪法 1.1 版本引用同步 v3.3（人类已批准，仅改版本号）
+- 鉴权决策（人类批准）：页面 GET 公开，写操作（上传/删除 API）必须 `X-API-Key`；前端 localStorage 存 Key，不引入 Cookie/JWT
+- 删除语义（人类确认）：**先删 DB 再删文件**；文件删除失败记日志，并在本日报登记「孤儿文件」待清理记录
+
+### 今天计划（D4.5）
+1. `meta.Store` 增 `List` / `Delete`，`service` 增 `ListImages` / `DeleteImage` ✅
+2. 路由：`GET /upload`（拖拽 + 粘贴 + URL/Markdown/HTML/BBCode 复制）、`GET /gallery`（网格 + 复制 + 删除 + 空状态）、`DELETE /api/images/{key}` ✅
+3. 首页/图片页导航互联；DESIGN.md 补两页页面规范 ✅
+4. 测试全绿后截图汇报上传闭环 ✅
+
+### 实现要点
+- `meta.Insert` 时间戳改为 RFC3339Nano：修复同秒多图画廊排序不稳定（`ORDER BY created_at DESC` 秒级打平）；解析端 `time.Parse(time.RFC3339)` 向后兼容
+- `DeleteImage` 严格「先删 DB 再删文件」：文件删除失败仅 `log` 孤儿文件并向上返回成功（DB 已删，不裂图）
+- 页面鉴权：`GET /upload`、`GET /gallery` 公开（服务端渲染只读元数据），`DELETE` 走 `withAuth`；前端 Key 存 localStorage
+- `//go:embed static/*.html` 通配嵌入，`galleryPageTmpl` 服务端渲染（limit 100）
+
+### 验收标准通过情况
+| 编号 | 条目 | 结果 | 说明 |
+| :--- | :--- | :--- | :--- |
+| A1–A10 | v3.2 既有验收 | ✅ | 见上一条日报，D4.5 未动既有链路 |
+| 新增 | 网页上传闭环（D4.5） | ✅ | 测试 `TestUploadPage`/`TestGalleryEmptyState`/`TestGalleryUploadDeleteFlow`（含 401×2、200、404 三要素）/`TestHomeNavToPages`；CDP 实测浏览器上传成功 + 画廊删除 34→33、toast「已删除」 |
+| 新增 | 数据层闭环（D4.5） | ✅ | `TestListImagesOrderAndLimit`（倒序/limit/越界收敛）、`TestDeleteImage`、`TestDeleteImageOrphanFileTolerated`（孤儿文件仅记日志） |
+
+### 视觉截图
+- Chrome headless + CDP：`/tmp/mcpic-test/d45/{upload,upload-result,gallery,gallery-deleted,home}.png`，三页均符合 DESIGN.md（酸性黄绿唯一主操作、发丝边框、6/12/9999 圆角）
+
+### 孤儿文件登记（删除失败时在此追加）
+- （暂无）
+
+### 阻塞 / 需人类决策
+- （无）
+
+### 明天计划
+- D4.5 截图汇报 → 请求提交 → 等待群晖部署反馈
+
+---
+
 ## 2026-10-13（第 1 天续 · 阶段 D4）
 
 ### 本阶段完成

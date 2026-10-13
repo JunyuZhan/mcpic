@@ -229,3 +229,93 @@ func joinComma(paths []string) string {
 	}
 	return out
 }
+
+// uploadOne 上传一张测试图并返回结果。
+func uploadOne(t *testing.T, svc *Service) Result {
+	t.Helper()
+	res, err := svc.Upload(context.Background(), bytes.NewReader(pngBytes(t, 40, 30)), "t.png", Options{})
+	if err != nil {
+		t.Fatalf("Upload: %v", err)
+	}
+	return res
+}
+
+// TestListImagesOrderAndLimit 守护画廊列表：倒序、limit 生效、越界收敛。
+func TestListImagesOrderAndLimit(t *testing.T) {
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+	var keys []string
+	for i := 0; i < 3; i++ {
+		keys = append(keys, uploadOne(t, svc).Key)
+	}
+
+	list, err := svc.ListImages(ctx, 10)
+	if err != nil {
+		t.Fatalf("ListImages: %v", err)
+	}
+	if len(list) != 3 {
+		t.Fatalf("条数 = %d", len(list))
+	}
+	if list[0].Key != keys[2] || list[2].Key != keys[0] {
+		t.Fatalf("应按创建时间倒序, got [%s %s %s]", list[0].Key, list[1].Key, list[2].Key)
+	}
+
+	one, err := svc.ListImages(ctx, 1)
+	if err != nil || len(one) != 1 || one[0].Key != keys[2] {
+		t.Fatalf("limit=1 结果: %v err=%v", one, err)
+	}
+
+	// limit 越界收敛到默认 100，不报错。
+	def, err := svc.ListImages(ctx, 0)
+	if err != nil || len(def) != 3 {
+		t.Fatalf("limit=0 应收敛默认: len=%d err=%v", len(def), err)
+	}
+}
+
+// TestDeleteImage 守护删除闭环：先 DB 后文件，重复删除报 ErrNotFound。
+func TestDeleteImage(t *testing.T) {
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+	res := uploadOne(t, svc)
+
+	if err := svc.DeleteImage(ctx, res.Key); err != nil {
+		t.Fatalf("DeleteImage: %v", err)
+	}
+	if _, _, err := svc.Get(ctx, res.Key); !errors.Is(err, meta.ErrNotFound) {
+		t.Fatalf("删除后应 ErrNotFound, got %v", err)
+	}
+	if _, err := svc.st.Get(ctx, res.Key); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("删除后文件应不存在, got %v", err)
+	}
+	if err := svc.DeleteImage(ctx, res.Key); !errors.Is(err, meta.ErrNotFound) {
+		t.Fatalf("重复删除应 ErrNotFound, got %v", err)
+	}
+	if err := svc.DeleteImage(ctx, "missing00"); !errors.Is(err, meta.ErrNotFound) {
+		t.Fatalf("不存在 key 应 ErrNotFound, got %v", err)
+	}
+}
+
+// failDeleteStorage 删除文件时返回硬错误（非 ErrNotExist），用于孤儿文件路径。
+type failDeleteStorage struct {
+	storage.Storage
+}
+
+func (f *failDeleteStorage) Delete(context.Context, string) error {
+	return errors.New("磁盘 I/O 错误")
+}
+
+// TestDeleteImageOrphanFileTolerated 守护「先删 DB 再删文件」：文件删除失败
+// 只记孤儿文件日志，不回滚、不报错（元数据已删，页面不会裂图）。
+func TestDeleteImageOrphanFileTolerated(t *testing.T) {
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+	res := uploadOne(t, svc)
+
+	svc.st = &failDeleteStorage{Storage: svc.st}
+	if err := svc.DeleteImage(ctx, res.Key); err != nil {
+		t.Fatalf("文件删除失败不应向上报错: %v", err)
+	}
+	if _, _, err := svc.Get(ctx, res.Key); !errors.Is(err, meta.ErrNotFound) {
+		t.Fatalf("元数据应已删除, got %v", err)
+	}
+}

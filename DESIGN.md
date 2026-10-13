@@ -80,19 +80,35 @@
 ## 6. 页面规范
 
 ### 首页 `/`
-1. 顶栏：`MCPic` 字标（16px/510/`--paper`）+ 右侧 pill 徽标 `self-hosted image bed`
+1. 顶栏：`MCPic` 字标（16px/510/`--paper`）+ 中部导航「上传 · 画廊」（14px `--fog`，hover `--paper`）+ 右侧 pill 徽标 `self-hosted image bed`
 2. Hero：单行大标题（48–56px，`-0.022em`）+ 一句副文（16px `--fog`）
 3. 三步快速开始（卡片栅格，最多 3 列）：Docker 启动 → curl 上传 → 拿链接
 4. **MCP 配置示例**（代码块 + 幽灵复制按钮）—— 必须包含，Claude Code JSON 可直接复制
 5. API 速查表（表格：方法/路径/说明）
-6. 页脚：AGPL-3.0 · PRD v3.2 · GitHub 链接位
+6. 页脚：AGPL-3.0 · PRD v3.3 · GitHub 链接位
 
 ### 图片页（`GET /i/:key`，Accept 含 text/html 时）
-1. 顶栏同首页
+1. 顶栏同首页（pill 位显示图片 key）
 2. 居中图片预览卡（`--carbon` 底、12px 圆角、图片 contain、发丝边框）
 3. 元数据行：格式 / 宽×高 / 大小 / key（等宽）
 4. 操作区：**复制 Markdown**（酸性黄绿主按钮）+ 复制 URL（幽灵按钮）
 5. 图片原始字节仍由 `?raw=1` 提供，`<img src>` 指向它
+
+### 上传页（`GET /upload`）
+1. 顶栏同首页，「上传」为激活态（`--paper`）
+2. 标题「上传图片」+ 副文（粘贴快捷键用等宽 `kbd`）
+3. API Key 行：等宽密码输入框 + 小尺寸酸性黄绿「保存」按钮；下方 12px 说明（localStorage）
+4. **拖拽区**：`--carbon` 底、12px 圆角、`1px dashed --smoke` 发丝虚线；hover/dragover 边框转 `--acid-lime`、底色 `#111207`；整块可点触发文件选择
+5. 状态行（22px 占位）：成功 `--acid-lime`、失败 `--coral-red`，错误必须展示服务端三要素消息
+6. 结果卡（上传成功后出现）：96px 方形缩略图 + 等宽元数据（尺寸/格式/大小）+ **四行复制项**（URL / Markdown / HTML / BBCode）：76px `--ash` 标签 + 等宽值框 + 幽灵「复制」按钮（复制后 1.2s 变「已复制」）
+
+### 画廊页（`GET /gallery`）
+1. 顶栏同首页，「画廊」为激活态
+2. 头部行：标题「画廊」+ 右侧等宽计数 `N 张图片`
+3. **网格**：`repeat(auto-fill, minmax(240px, 1fr))`，卡片 `--carbon` 底 12px 圆角发丝边框，hover 边框提亮 `--smoke`
+4. 卡片：4:3 图片区（`?raw=1`，cover，lazy 加载）→ 徽标行（格式 / 尺寸 / 大小 / 时间，pill 等宽）→ key 路径行（等宽、省略号）→ 操作组：URL / Markdown / HTML / BBCode 四个幽灵按钮 + 右侧 `--coral-red`「删除」（间距隔开）
+5. 删除流程：浏览器 confirm → `DELETE /api/images/{key}` 带 `X-API-Key` → 成功卡片移除并刷新计数，计数归零时刷新页面；401 提示去上传页填 Key
+6. **空状态**：单张居中卡（64px 上下留白）：「还没有图片」+ 一句引导 + 酸性黄绿「去上传」链接按钮
 
 ## 7. Do / Don't
 

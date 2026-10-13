@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画廊 · MCPic</title>
+<style>
+:root{
+  --void:#08090a; --carbon:#0f1011; --obsidian:#161718;
+  --graphite:#23252a; --smoke:#383b3f; --ash:#62666d;
+  --fog:#8a8f98; --mist:#d0d6e0; --bone:#e5e5e6; --paper:#ffffff;
+  --acid-lime:#e4f222; --coral-red:#eb5757;
+  --font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--void);color:var(--mist);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--mist);text-decoration:none}
+a:hover{color:var(--paper)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{font-size:16px;font-weight:600;color:var(--paper);letter-spacing:-.011em}
+.logo span{color:var(--acid-lime)}
+.nav-links{display:flex;gap:16px;font-size:14px}
+.nav-links a{color:var(--fog)}
+.nav-links a:hover,.nav-links a.active{color:var(--paper)}
+.pill{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:4px 12px;font-size:12px}
+.head{display:flex;align-items:baseline;justify-content:space-between;margin:32px 0 20px}
+h1{font-size:32px;font-weight:600;letter-spacing:-.012em;color:var(--paper)}
+.count{font-size:13px;color:var(--ash);font-family:var(--font-mono)}
+.empty{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);padding:64px 24px;text-align:center}
+.empty .big{font-size:16px;color:var(--mist);margin-bottom:8px}
+.empty .small{font-size:13px;color:var(--fog);margin-bottom:20px}
+.empty a{display:inline-block;background:var(--acid-lime);color:var(--void);border-radius:6px;padding:10px 16px;font-size:14px;font-weight:550}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.item{background:var(--carbon);border-radius:12px;box-shadow:inset 0 0 0 1px var(--graphite);overflow:hidden;transition:box-shadow .15s}
+.item:hover{box-shadow:inset 0 0 0 1px var(--smoke)}
+.item .pic{display:block;aspect-ratio:4/3;background:var(--obsidian)}
+.item .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.item .body{padding:14px 16px 16px}
+.metaline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.badge{background:rgba(255,255,255,.05);color:var(--fog);border-radius:9999px;padding:2px 10px;font-size:11px;font-family:var(--font-mono)}
+.badge b{color:var(--mist);font-weight:500}
+.keyline{font-family:var(--font-mono);font-size:12px;color:var(--ash);margin-bottom:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions button{background:var(--obsidian);border:1px solid var(--graphite);color:var(--mist);border-radius:6px;padding:5px 10px;font-size:12px;font-family:var(--font-sans);cursor:pointer}
+.actions button:hover{border-color:var(--smoke);color:var(--paper)}
+.actions button.del{color:var(--coral-red);margin-left:auto}
+.actions button.del:hover{border-color:var(--coral-red)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--obsidian);border:1px solid var(--smoke);color:var(--mist);border-radius:6px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+footer{margin-top:48px;padding:24px 0 48px;border-top:1px solid var(--graphite);font-size:13px;color:var(--ash)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="logo" href="/">MCP<span>ic</span></a>
+  <div class="nav-links"><a href="/upload">上传</a><a href="/gallery" class="active">画廊</a></div>
+  <span class="pill">self-hosted image bed</span>
+</nav>
+
+<div class="head">
+  <h1>画廊</h1>
+  <span class="count" id="count">{{.Count}} 张图片</span>
+</div>
+
+{{if .Items}}
+<div class="grid" id="grid">
+  {{range .Items}}
+  <div class="item" data-key="{{.Key}}">
+    <a class="pic" href="/i/{{.Key}}"><img src="{{.RawURL}}" alt="{{.Key}}" loading="lazy"></a>
+    <div class="body">
+      <div class="metaline">
+        <span class="badge">{{.Format}}</span>
+        <span class="badge"><b>{{.Width}}×{{.Height}}</b></span>
+        <span class="badge"><b>{{.Size}}</b></span>
+        <span class="badge">{{.Created}}</span>
+      </div>
+      <div class="keyline">/i/{{.Key}}</div>
+      <div class="actions">
+        <button data-copy="{{.JSURL}}">URL</button>
+        <button data-copy="{{.JSMarkdown}}">Markdown</button>
+        <button data-copy="{{.JSHTML}}">HTML</button>
+        <button data-copy="{{.JSBBCode}}">BBCode</button>
+        <button class="del" data-del>删除</button>
+      </div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{else}}
+<div class="empty">
+  <div class="big">还没有图片</div>
+  <div class="small">上传第一张图，或让 AI Agent 通过 MCP 直传</div>
+  <a href="/upload">去上传</a>
+</div>
+{{end}}
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var toastTimer;
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show') }, 1600);
+}
+function copyText(t){
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function(){
+    var ta = document.createElement('textarea'); ta.value = t;
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy') }catch(e){}
+    document.body.removeChild(ta);
+  });
+  toast('已复制到剪贴板');
+}
+document.querySelectorAll('[data-copy]').forEach(function(b){
+  b.addEventListener('click', function(){ copyText(b.getAttribute('data-copy')) });
+});
+document.querySelectorAll('[data-del]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var card = b.closest('.item');
+    var key = card.getAttribute('data-key');
+    var k = localStorage.getItem('mcpic_api_key') || '';
+    if(!k){ toast('请先在上传页填写 API Key'); return }
+    if(!confirm('删除图片 ' + key + '？此操作不可恢复。')){ return }
+    fetch('/api/images/' + encodeURIComponent(key), { method: 'DELETE', headers: { 'X-API-Key': k } })
+      .then(function(r){
+        if(r.status === 401){ toast('API Key 无效或缺失'); return Promise.reject() }
+        if(!r.ok){ return r.json().then(function(j){ return Promise.reject(new Error(j.message || '删除失败')) }) }
+        card.remove();
+        var grid = document.getElementById('grid');
+        var n = grid ? grid.querySelectorAll('.item').length : 0;
+        document.getElementById('count').textContent = n + ' 张图片';
+        if(n === 0){ location.reload() }
+        toast('已删除');
+      })
+      .catch(function(e){ toast(e && e.message ? e.message : '删除失败') });
+  });
+});
+</script>
+</body>
+</html>
