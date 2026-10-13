@@ -24,6 +24,8 @@ docker run -d -p 8080:8080 \
 docker build -t mcpic/mcpic:latest .
 ```
 
+群晖 NAS + Docker + Cloudflare Tunnel 生产部署见 **[docs/deploy-synology.md](docs/deploy-synology.md)**。
+
 ### 本地运行
 
 ```bash
