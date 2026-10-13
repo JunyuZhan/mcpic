@@ -30,6 +30,35 @@
 
 <!-- 最新日报插入在此行下方 -->
 
+## 2026-10-13（第 1 天续 · 阶段 D4.8 · 线上上传测试报告修复 · v1.0.3）
+
+### 背景
+《MCP 上传测试与外链报告》结论：MCP 配置无法产出可用外链——根因是 MCP 为本地写文件+拼 URL，未同机同存储必然 404（铁律被验证）；另发现 P2 仍在（CF 邮箱混淆把首页 curl 示例的 `file=@screenshot.png` 显示成 `[email protected]`）。用户批准：代码层修 P2、3MB 生效范围标注、文档补铁律与接口实测、打 v1.0.3。P1/P5 由用户在 CF 面板自行处理。
+
+### 修复与产出
+| 项 | 内容 |
+| :--- | :--- |
+| P2 CF 邮箱混淆 | `index.html` curl 示例两处 `@` 改写 HTML 实体 `&#64;screenshot.png`：浏览器渲染与 data-copy 解码均为原样 `@`，CF 字节流扫描不到邮箱形态；`TestHomeDynamicBaseURL` 加防回归断言（须含实体、禁裸 @） |
+| 3MB 范围标注 | 首页页脚「超 3MB 网页端预压缩，API 直传不限」；upload 页 footer 同步；`docs/mcp-api.md` 专节声明 API 端限制属 v2 范围 |
+| `docs/mcp-api.md`（新建） | 铁律章节（S1 404 / S2 200 / S3 200 对照实验表 + 方案 A/B）、接口一览（含 D4.7 `/api/gallery`、`/gallery` 壳页、`/api/images/{key}` 仅 DELETE 返回 405）、鉴权说明（`MCPIC_API_KEY` 对 MCP stdio 无校验）、线上响应头基准 |
+| `QUICKSTART.md` | MCP 链接新增「MCP 不是连到网站上传」提醒；故障排查铁律补对照实验教训（BASE_URL 只改前缀不改去向）；3MB 范围说明；链接 mcp-api.md |
+
+### 验收标准通过情况
+| 编号 | 条目 | 结果 | 说明 |
+| :--- | :--- | :--- | :--- |
+| D4.8 | P2 字节流无裸 @ | ✅ | curl 实测首页 2 处 `&#64;`、0 处 `file=@screenshot` |
+| D4.8 | 渲染与复制不回归 | ✅ | CDP：codeblock 显示 `file=@screenshot.png`；data-copy 解码 `-F 'file=@screenshot.png'` |
+| D4.8 | 文档范围与铁律 | ✅ | mcp-api.md/QUICKSTART 落稿；P1/P5 留用户 CF 面板处理 |
+| — | `make test`/`lint` | ✅ | 全绿、干净 |
+
+### 阻塞 / 需人类决策
+- （无）P1（Always Use HTTPS）、P5（CDN 缓存规则）由用户在 Cloudflare 面板自行调整
+
+### 明天计划
+- 打 tag v1.0.3 推送；NAS `git pull && docker compose up -d --build` 后线上复验 P2 显示；CF 面板调整 P1/P5
+
+---
+
 ## 2026-10-13（第 1 天续 · 阶段 D4.7 · 线上验收修复）
 
 ### 背景（Dogfooding 严格黑盒验收）

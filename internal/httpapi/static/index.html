@@ -76,10 +76,10 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
     </div>
     <div class="card">
       <div class="step">02 · 上传</div>
-      <div class="card-head"><h3>curl 直接传图</h3><button class="ghost" data-copy="curl -X POST http://localhost:8080/api/upload -H 'X-API-Key: your-secret-key' -F 'file=@screenshot.png'">复制</button></div>
-      <div class="codeblock">curl -X POST http://localhost:8080/api/upload \
+    <div class="card-head"><h3>curl 直接传图</h3><button class="ghost" data-copy="curl -X POST http://localhost:8080/api/upload -H 'X-API-Key: your-secret-key' -F 'file=&#64;screenshot.png'">复制</button></div>
+    <div class="codeblock">curl -X POST http://localhost:8080/api/upload \
   -H "X-API-Key: your-secret-key" \
-  -F "file=@screenshot.png"</div>
+  -F "file=&#64;screenshot.png"</div>
     </div>
     <div class="card">
       <div class="step">03 · 拿链接</div>
@@ -130,7 +130,7 @@ footer{margin-top:64px;padding:32px 0 48px;border-top:1px solid var(--graphite);
 <footer>
   <span>AGPL-3.0-only</span>
   <span>PRD v3.2</span>
-  <span>上传自动转 WebP · 最大 10MB（超 3MB 前端预压缩）· PNG/JPEG → WebP(85) · 超宽等比缩放</span>
+  <span>上传自动转 WebP · 最大 10MB（超 3MB 网页端预压缩，API 直传不限）· PNG/JPEG → WebP(85) · 超宽等比缩放</span>
 </footer>
 </div>
 <script>

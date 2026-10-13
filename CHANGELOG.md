@@ -5,15 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [v1.0.3] - 2026-10-13
 
 ### Fixed
+- Cloudflare 邮箱混淆误伤首页 curl 示例（P2，D4.8）：`file=@screenshot.png` 的 `@` 改写为 HTML 实体 `&#64;`，浏览器渲染与复制按钮解码不变，CF 扫描不再误判为邮箱地址
 - 线上验收问题（D4.7）：
   - P3 首页 MCP 配置示例硬编码 `https://mcpic.cn` → 服务端模板注入 `MCPIC_BASE_URL`（配置值或请求 Host 推断）
   - P4 画廊隐私泄露：`/gallery` 改为无数据壳页，图片列表仅经鉴权 API `GET /api/gallery`（`X-API-Key`）返回；前端 localStorage 无 Key 强制跳转 `/upload`
   - 3MB 隧道带宽墙：上传页对超过 3MB 的非 GIF 图片自动前端预压缩（长边 1920、WebP 质量 85），文案说明预压缩行为
 
 ### Added
+- `docs/mcp-api.md`：HTTP/MCP 接口文档、线上实测结果、**「MCP 与 HTTP 必须同机同存储」铁律**（含 S1/S2/S3 对照实验）、3MB 预压缩生效范围声明（仅网页端，API 端限制标记 v2）
+- `QUICKSTART.md`：补「MCP 不是连到网站上传」语义提醒与 3MB 预压缩范围说明，链接至 mcp-api.md
 - 上传页多文件队列（D4.6）：文件选择/拖拽/粘贴支持多选，前端串行队列逐张上传（避免并发写 SQLite），整体进度「N/M」展示，失败项单独标红并支持逐张重试；结果为每张四格式复制（URL/Markdown/HTML/BBCode）。纯前端改动，后端零变化
 - 项目文档：PRD v3.2、Agent 宪法（`docs/AGENT_CONSTITUTION.md`）、CHANGELOG、开发日志模板
 - HTTP 上传接口 `POST /api/upload`（multipart 与 JSON base64），X-API-Key 鉴权

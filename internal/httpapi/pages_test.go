@@ -63,6 +63,10 @@ func TestHomeDynamicBaseURL(t *testing.T) {
 	if !strings.Contains(html, host) {
 		t.Fatalf("首页 MCP 配置示例应包含请求推断的 host %q", host)
 	}
+	// D4.8 P2：curl 示例的 @ 必须写成 HTML 实体，防止 Cloudflare 邮箱混淆改写显示。
+	if !strings.Contains(html, "file=&#64;screenshot.png") || strings.Contains(html, "file=@screenshot.png") {
+		t.Fatalf("curl 示例的 @ 必须使用 &#64; 实体规避 CF 邮箱混淆")
+	}
 
 	// 显式配置 BaseURL：示例必须用配置值。
 	srv2, _ := newTestServer(t, func(c *config.Config) { c.BaseURL = "https://pic.example.com" })
