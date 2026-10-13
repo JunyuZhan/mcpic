@@ -13,6 +13,13 @@ const (
 	CodeProcessError      = "PROCESS_ERROR"
 	CodeUnauthorized      = "UNAUTHORIZED"
 	CodePathNotAllowed    = "PATH_NOT_ALLOWED"
+	// 以下为 PRD 表外新增码（经人类批准）：
+	// IMAGE_NOT_FOUND —— GET /i/:key 404（D1 已批准）
+	// BAD_REQUEST / BAD_CONTENT_TYPE —— 请求参数错误
+	// DOWNLOAD_FAILED —— MCP url 来源下载失败（D3 汇报请人类追认）
+	CodeImageNotFound = "IMAGE_NOT_FOUND"
+	CodeBadRequest    = "BAD_REQUEST"
+	CodeDownloadFail  = "DOWNLOAD_FAILED"
 )
 
 // Error 是携带错误码的应用错误。
@@ -59,6 +66,17 @@ func ProcessError() *Error {
 // Unauthorized API Key 校验失败。
 func Unauthorized() *Error {
 	return New(CodeUnauthorized, "API Key 无效或缺失")
+}
+
+// BadRequest 参数错误。
+func BadRequest(detail string) *Error {
+	return New(CodeBadRequest, detail)
+}
+
+// DownloadFailed 远程图片下载失败。
+func DownloadFailed(rawURL string, cause error) *Error {
+	return New(CodeDownloadFail,
+		fmt.Sprintf("下载 %s 失败：%v，该 URL 无法访问", rawURL, cause))
 }
 
 // PathNotAllowed 路径不在白名单内。allowed 是允许的路径前缀列表。

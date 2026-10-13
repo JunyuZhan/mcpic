@@ -16,6 +16,9 @@
 - 图片处理：魔数识别、尺寸探测、PNG/JPEG → WebP（质量 85）、超宽等比缩放（PRD 第 5 节）
 - BASE_URL 四级回退（MCPIC_BASE_URL → X-Forwarded-Host → Host → localhost）
 - 本地路径白名单校验（PRD 3.5，Abs+Clean 边界匹配）
+- MCP Server `upload_image` 工具（path / url / data 三选一，`mcpic mcp` 独立启动，官方 Go SDK）
+- 远程 URL 下载上传（超时与大小预检）
+- 三段式失败文案：错误类型 / 相关输入 / 下一步建议（PRD 3.1）
 - 单元测试（storage / imgproc / service / httpapi）与 Makefile（build / test / lint / run）
 
 ## [0.1.0] - 未发布

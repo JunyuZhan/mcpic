@@ -30,6 +30,69 @@
 
 <!-- 最新日报插入在此行下方 -->
 
+## 2026-10-13（第 1 天续 · 阶段 D3）
+
+### 本阶段完成
+- D2 缩放复核：`TestProcessResize`（3840→1920x1080）+ curl 实测（4000→1920x480）均通过
+- D3：MCP Server `upload_image`（官方 Go SDK v1.8.0，PRD 技术表内推荐依赖）
+  - `path` / `url` / `data` 三选一，`format` / `max_width` 可选
+  - `mcpic mcp` 独立启动（stdio，协议走 stdout、日志走 stderr，宪法 8.1）
+  - 远程 URL 下载（30s 超时 + 大小预检）
+  - 失败文案三段式：错误类型 / 相关输入 / 可执行下一步（PRD 3.1）
+- D1 提交：`96c7317 feat: 完成 D1 上传闭环与本地存储`
+
+### 验收标准通过情况
+| 编号 | 条件 | 结果 | 说明 |
+| :--- | :--- | :--- | :--- |
+| A2 | Claude Code 配置 MCP 后可上传本地文件 | ✅* | stdio 客户端等价实测：initialize → tools/list → tools/call(path) 成功返回 URL，下载 200 image/webp；Claude Code 实机配置待人类执行 |
+| A4 | 上传不存在的路径返回明确错误 | ✅ | `isError=true`，文案与 PRD 示例逐字一致 |
+| A10 | 上传 /etc/passwd 返回 PATH_NOT_ALLOWED | ✅ | 三要素齐全（类型 / 路径 / 白名单指引） |
+| 其余 | A1/A3/A5/A6/A7/A8/A9 | ✅ | 见上一条日报，D3 无回归（全量测试 + lint 通过） |
+
+### MCP 调用闭环实测记录
+```
+initialize      → serverInfo: {name: mcpic, version: 0.1.0}
+tools/list      → upload_image [path, url, data, format, max_width]
+tools/call path → 上传成功
+                 URL: http://localhost:8080/i/on1B2Psz
+                 Markdown: ![image](http://localhost:8080/i/on1B2Psz)
+GET 该 URL      → HTTP 200, image/webp
+A4 / A10        → isError=true + 三要素错误文案（见上方完整输出）
+```
+
+### 需人类追认的新增错误码（D1 起累计，均未修改 PRD 既有码）
+| 错误码 | 用途 | 引入阶段 |
+| :--- | :--- | :--- |
+| `IMAGE_NOT_FOUND` | GET /i/:key 404 | D1（已批准） |
+| `BAD_REQUEST` / `BAD_CONTENT_TYPE` | 请求参数/Content-Type 错误 | D1（本次追认） |
+| `DOWNLOAD_FAILED` | MCP url 来源下载失败 | D3（本次追认） |
+
+### Claude Code 接入配置（供人类使用）
+```json
+{
+  "mcpServers": {
+    "mcpic": {
+      "command": "/path/to/mcpic",
+      "args": ["mcp"],
+      "env": {
+        "MCPIC_STORAGE_PATH": "/data/uploads",
+        "MCPIC_BASE_URL": "https://your-domain"
+      }
+    }
+  }
+}
+```
+注：MCP 进程与 HTTP 进程共享同一 `MCPIC_STORAGE_PATH`（SQLite WAL 已验证跨进程并发）。
+
+### 阻塞 / 需人类决策
+- 追认上表 3 组新增错误码
+- D3 提交（待批准后执行）
+
+### 明天计划（D4）
+- Docker 镜像 + 单二进制发布验证（A1、A8 docker stats、A7 复核）
+- 首页（项目说明 + MCP 配置示例）、README
+- `/metrics` 若需启用，先申请 Prometheus 依赖批准
+
 ## 2026-10-13（第 1 天 · 阶段 D1）
 
 ### 昨天完成

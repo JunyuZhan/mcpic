@@ -9,7 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -120,6 +123,38 @@ func (s *Service) UploadPath(ctx context.Context, path string) (Result, error) {
 	}
 	defer func() { _ = f.Close() }()
 	return s.Upload(ctx, f, filepath.Base(path), Options{})
+}
+
+// UploadURL 下载远程图片并上传（MCP 的 url 来源，PRD 3.1）。
+func (s *Service) UploadURL(ctx context.Context, rawURL string, opts Options) (Result, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return Result{}, apperr.DownloadFailed(rawURL, err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return Result{}, apperr.DownloadFailed(rawURL, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return Result{}, apperr.DownloadFailed(rawURL,
+			fmt.Errorf("HTTP %d", resp.StatusCode))
+	}
+	if resp.ContentLength > s.cfg.MaxBytes {
+		return Result{}, apperr.FileTooLarge(formatSize(resp.ContentLength))
+	}
+	return s.Upload(ctx, resp.Body, path.Base(mustPath(rawURL)), opts)
+}
+
+// mustPath 提取 URL 路径部分用于错误提示，失败时返回空串。
+func mustPath(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return u.Path
 }
 
 // Get 返回图片元数据与内容流。key 不存在时返回 meta.ErrNotFound。
