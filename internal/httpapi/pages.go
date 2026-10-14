@@ -51,7 +51,7 @@ func (s *Server) handleAPIGallery(w http.ResponseWriter, r *http.Request) {
 // galleryImage 组装单张图片的列表数据。
 func (s *Server) galleryImage(img meta.Image, base string) galleryImage {
 	rel := s.svc.URL(img.Key)
-	url := base + rel
+	url := joinURL(base, rel)
 	return galleryImage{
 		Key:      img.Key,
 		Format:   img.Format,

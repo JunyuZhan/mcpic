@@ -2,9 +2,19 @@ package httpapi
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/mcpic/mcpic/internal/config"
 )
+
+// joinURL 拼接链接：u 已是绝对 URL（http/https 开头，S3 直连）则直接用；
+// 否则视为相对路径，接在 base 之后（本地代理模式）。
+func joinURL(base, u string) string {
+	if strings.HasPrefix(u, "http://") || strings.HasPrefix(u, "https://") {
+		return u
+	}
+	return base + u
+}
 
 // getBaseURL 按 PRD 3.4 的四级回退生成链接基础地址，顺序不可颠倒（实现提示 4）：
 //  1. MCPIC_BASE_URL（显式配置优先，无条件使用）

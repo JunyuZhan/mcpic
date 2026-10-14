@@ -15,6 +15,22 @@ import (
 func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
+	// 直连模式（S3）：图片字节由对象存储/CDN 提供，这里只查元数据，
+	// 浏览器来 → 预览页，其余 → 302 到直链（Spec 第 7 节）。
+	if s.cfg.IsS3() {
+		img, err := s.svc.GetMeta(r.Context(), key)
+		if err != nil {
+			writeAppError(w, err)
+			return
+		}
+		if wantsHTML(r) {
+			s.renderImagePage(w, r, img)
+			return
+		}
+		http.Redirect(w, r, s.svc.URL(key), http.StatusFound)
+		return
+	}
+
 	img, rc, err := s.svc.Get(r.Context(), key)
 	if err != nil {
 		writeAppError(w, err)

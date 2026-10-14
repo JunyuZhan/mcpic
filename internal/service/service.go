@@ -158,6 +158,11 @@ func mustPath(rawURL string) string {
 	return u.Path
 }
 
+// GetMeta 只返回图片元数据（直连模式下预览页与 302 用，不触碰对象存储）。
+func (s *Service) GetMeta(ctx context.Context, key string) (meta.Image, error) {
+	return s.db.Get(ctx, key)
+}
+
 // Get 返回图片元数据与内容流。key 不存在时返回 meta.ErrNotFound。
 func (s *Service) Get(ctx context.Context, key string) (meta.Image, io.ReadCloser, error) {
 	img, err := s.db.Get(ctx, key)

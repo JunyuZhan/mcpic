@@ -27,24 +27,43 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "mcp" {
-		runMCP()
-		return
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "mcp":
+			runMCP()
+			return
+		case "migrate":
+			runMigrate(hasFlag("force"), hasFlag("verify"))
+			return
+		}
 	}
 	runHTTP()
+}
+
+// hasFlag 检查命令行是否包含某个布尔标志（如 --force）。
+func hasFlag(name string) bool {
+	for _, a := range os.Args[2:] {
+		if a == "-"+name || a == "--"+name {
+			return true
+		}
+	}
+	return false
 }
 
 // setup 读取配置并装配 storage / meta / service。
 func setup() (*config.Config, *service.Service, func()) {
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("配置错误：%v", err)
+	}
 
 	if err := os.MkdirAll(cfg.StoragePath, 0o750); err != nil {
 		log.Fatalf("创建存储目录失败 path=%s: %v", cfg.StoragePath, err)
 	}
 
-	st, err := storage.NewLocal(cfg.StoragePath)
+	st, err := newStorage(cfg)
 	if err != nil {
-		log.Fatalf("初始化本地存储失败: %v", err)
+		log.Fatalf("初始化存储失败: %v", err)
 	}
 
 	db, err := meta.Open(filepath.Join(cfg.StoragePath, "mcpic.db"))
@@ -58,6 +77,23 @@ func setup() (*config.Config, *service.Service, func()) {
 
 	svc := service.New(cfg, st, db)
 	return cfg, svc, func() { _ = db.Close() }
+}
+
+// newStorage 按 StorageType 构造存储后端：s3 或本地（默认）。
+func newStorage(cfg *config.Config) (storage.Storage, error) {
+	if cfg.IsS3() {
+		s := cfg.S3
+		return storage.NewS3(storage.S3Options{
+			Endpoint:        s.Endpoint,
+			Region:          s.Region,
+			Bucket:          s.Bucket,
+			AccessKeyID:     s.AccessKeyID,
+			SecretAccessKey: s.SecretAccessKey,
+			PublicBaseURL:   s.PublicBaseURL,
+			ForcePathStyle:  s.ForcePathStyle,
+		})
+	}
+	return storage.NewLocal(cfg.StoragePath)
 }
 
 // runHTTP 启动 HTTP 服务。

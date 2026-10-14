@@ -51,7 +51,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := getBaseURL(s.cfg, r)
-	url := base + s.svc.URL(result.Key)
+	url := joinURL(base, s.svc.URL(result.Key))
 	writeJSON(w, http.StatusOK, uploadResponse{
 		URL:      url,
 		Markdown: "![image](" + url + ")",

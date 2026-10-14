@@ -203,6 +203,24 @@ func TestGetMissingKey(t *testing.T) {
 	}
 }
 
+func TestGetMetaOnly(t *testing.T) {
+	svc, _ := newTestService(t)
+	res, err := svc.Upload(context.Background(), bytes.NewReader(pngBytes(t, 64, 64)), "a.png", Options{})
+	if err != nil {
+		t.Fatalf("Upload: %v", err)
+	}
+	img, err := svc.GetMeta(context.Background(), res.Key)
+	if err != nil {
+		t.Fatalf("GetMeta: %v", err)
+	}
+	if img.Key != res.Key || img.Format != res.Format {
+		t.Fatalf("GetMeta 与 Upload 结果不一致: %+v vs %+v", img, res)
+	}
+	if _, err := svc.GetMeta(context.Background(), "missing-meta"); !errors.Is(err, meta.ErrNotFound) {
+		t.Fatalf("期望 meta.ErrNotFound, got %v", err)
+	}
+}
+
 func TestAllowAllPaths(t *testing.T) {
 	svc, cfg := newTestService(t)
 	cfg.AllowAll = true

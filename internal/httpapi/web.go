@@ -52,7 +52,13 @@ func wantsHTML(r *http.Request) bool {
 
 // renderImagePage 输出图片预览页（展示图片 + 一键复制 Markdown）。
 func (s *Server) renderImagePage(w http.ResponseWriter, r *http.Request, img meta.Image) {
-	url := getBaseURL(s.cfg, r) + s.svc.URL(img.Key)
+	rel := s.svc.URL(img.Key)
+	url := joinURL(getBaseURL(s.cfg, r), rel)
+	// 直连模式下 rel 已是绝对直链，?raw=1 无意义；本地模式需拼 ?raw=1 取原图。
+	rawURL := rel
+	if !strings.HasPrefix(rel, "http://") && !strings.HasPrefix(rel, "https://") {
+		rawURL = rel + "?raw=1"
+	}
 	data := imagePageData{
 		Key:        img.Key,
 		Format:     img.Format,
@@ -60,7 +66,7 @@ func (s *Server) renderImagePage(w http.ResponseWriter, r *http.Request, img met
 		Height:     img.Height,
 		Size:       humanSize(img.Size),
 		URL:        url,
-		RawURL:     s.svc.URL(img.Key) + "?raw=1",
+		RawURL:     rawURL,
 		Markdown:   "![image](" + url + ")",
 		JSMarkdown: "![image](" + url + ")",
 		JSURL:      url,
